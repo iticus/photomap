@@ -1,0 +1,24 @@
+<!DOCTYPE html PUBLIC "-//CL//DTD XHTML 1.0 Transitional plus Embed//EN" "http://www.w3.org/Graphics/xhtml1-transitional-plus-embed.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8; IE=EmulateIE9">
+	    <title>{% block title %}Title{% end %}</title>
+		{% block style %}
+			<link rel="stylesheet" type="text/css" href="{{ static_url('css/base.css') }}" />
+        {% end style %}
+        
+		{% block script %}
+		    <script type="text/javascript" src="{{ static_url('js/jquery.js') }}"> </script>
+		    <script type="text/javascript" src="{{ static_url('js/jquery-ui.js') }}"> </script>
+		{% end script %}
+
+  {% block body %}
+  	<body>
+		<a href="map/">Map</a>
+		<a href="geotag/">Geotag</a>
+		<a href="stats/">Stats</a>
+	</body>
+  {% end body %}
+  
+</html>

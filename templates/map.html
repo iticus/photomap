@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+	{% block style %}
+	    <link rel="stylesheet" type="text/css" href="{{ static_url('css/base.css') }}" />
+	    <link rel="stylesheet" type="text/css" href="{{ static_url('css/map.css') }}" />
+	{% end style %}
+	
+	{% block script %}
+    	<script src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+	    <script type="text/javascript" src="{{ static_url('js/jquery.js') }}"></script>
+	    <script type="text/javascript" src="{{ static_url('js/jquery-ui.js') }}"></script>
+    	<script type="text/javascript" src="{{ static_url('js/jquery.tools.min.js') }}"></script>
+    	<script type="text/javascript" src="{{ static_url('js/markerclusterer.js') }}"></script>
+    	<script type="text/javascript" src="{{ static_url('js/utils.js') }}"></script>
+	    <script type="text/javascript" src="{{ static_url('js/map.js') }}"></script>
+	 <script type="text/javascript">
+	    var images = [];
+ 		{% for image in images %}
+ 			images.push({
+ 				'id': {{ image[0] }},
+ 				'hash': '{{ image[1] }}',
+ 				'lat': {{ image[2] }},
+ 				'lng': {{ image[3] }},
+ 				'altitude': {{ image[4] }},
+ 				'moment': new Date({{ image[5] }} * 1000),
+ 				'filename': '{{ image[6] }}',
+ 				'size': '{{ image[7] }}',
+ 				'camera': '{{ image[8] }}' + ' ' + '{{ image[9] }}',
+ 				'orientation': '{{ image[10] }}',
+ 				'path': '{{ image[11] }}',
+ 				'width': '{{ image[12] }}',
+ 				'height': '{{ image[13] }}',
+ 				'description': '{{ image[14] }}'
+ 				
+ 			});
+        {% end %}        
+    </script>
+	{% end script %}
+	
+	{% block body %}
+	<body>	
+	    <div id="mapCanvas"></div>
+	    
+	    <div id="imageOverlay" class="overlay" onclick="closeOverlayContainer()">
+	    	<div id="overlayContainer">
+	    	</div>
+	    </div>
+	    
+	    <div id="optionsPane">
+	    	<span>Marker Clustering (K)</span>
+	   		<input type="radio" name="markerClustering" onclick="enableClustering()" checked />ON<br>
+	   		<input type="radio" name="markerClustering" onclick="disableClustering()" />OFF<br>
+	    </div>
+	</body>
+	{% end body %}
+	

@@ -1,0 +1,92 @@
+html, body, div#mapCanvas {
+     margin: 0;
+     padding: 0;
+     height: 100%;
+}
+
+div#imageList {
+    position: absolute;
+    left: 80px;
+    right: 80px;
+    bottom: 20px;
+    height: 48px;
+    font-size: 12px;
+    background-color: rgba(0, 0, 0, 0.2);
+	overflow: hidden;
+}
+
+table.info-table {
+	border-collapse: collapse;
+	text-align: center;
+	font-size: 13px;
+}
+
+table.info-table td, table.info-table th {
+	border-right: 1px solid #CCC;
+	padding: 3px;
+}
+
+table.info-table tr td:first-child {
+	text-align: right;
+}
+	
+table.info-table tr td:last-child {
+	text-align: left;
+}
+
+table.info-table tr:nth-child(even) {
+	background-color: #E8E8E8;
+}
+div.overlay {
+    /* initially overlay is hidden */
+    display: none;
+    cursor: pointer;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    font-size: 11px;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+div#overlayContainer {
+    /* initially overlay is hidden */
+    width: 0px;
+    margin: auto;
+    box-shadow: 2px 2px 20px 3px #000;
+}
+
+div#optionsPane {
+    /* initially overlay is hidden */
+    display: none;
+    box-shadow: 2px 2px 20px 3px #000;
+    width: 640px;
+    height: 480px;
+    margin: auto;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    font-size: 12px;
+    background-color: rgba(255, 255, 255, 0.92);
+}
+.image-list-item {
+	cursor: pointer;
+	display: inline;
+	max-height: 42px;
+	margin-left: 12px; 
+	margin-top: 3px;
+	z-index: 16; 
+}
+
+#form
+input, textarea, select, button {
+  width : 150px;
+  margin: 0;
+
+  -webkit-box-sizing: border-box; /* For legacy WebKit based browsers */
+     -moz-box-sizing: border-box; /* For all Gecko based browsers */
+          box-sizing: border-box;
+}
