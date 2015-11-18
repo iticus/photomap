@@ -17,3 +17,6 @@
 
 ###Full image
 <img src="http://rssind.com/images/photomap_full_image.jpg" width="640" alt="full image">
+
+###Stats
+<img src="http://rssind.com/images/photomap_stats.jpg" width="640" alt="stats">

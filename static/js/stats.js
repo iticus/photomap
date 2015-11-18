@@ -16,10 +16,10 @@ function initializeStats() {
 			    tableData.addColumn('string', 'Camera');
 			    tableData.addColumn('number', 'Total');
 			    tableData.addColumn('number', 'Valid Position');
+			    tableData.addColumn('number', 'Percentage');
 			    tableData.addColumn('date', 'From');
 			    tableData.addColumn('date', 'To');
 			    tableData.addColumn('number', 'Size [MB]');
-			    tableData.addColumn('number', 'Percentage');
 				for ( var i = 0; i < images.length; i++) {
 					image = images[i];
 					//image.id, extract(epoch from moment) as moment, lat, lng, size, make, model, width, height
@@ -43,12 +43,12 @@ function initializeStats() {
 				
 				for (key in cameras) {
 					var v = cameras[key];
-					var p = v['valid_pos'] / v['total'];
+					var p = v['valid_pos'] / v['total'] * 100;
 					p = parseFloat(p.toFixed(2));
 					var s = parseFloat(v['size'].toFixed(2));
 					var d1 = new Date(v['start'] * 1000);
 					var d2 = new Date(v['stop'] * 1000);
-					tableData.addRow([key, v['total'], v['valid_pos'], d1, d2, s, p]);
+					tableData.addRow([key, v['total'], v['valid_pos'], p, d1, d2, s]);
 				}
 				tableData.sort([{column: 1, desc:true}]);
 		        var table = new google.visualization.Table(document.getElementById('tableChart'));
