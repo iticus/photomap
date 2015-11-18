@@ -85,6 +85,7 @@ class GeoHandler(BaseHandler):
         else:
             self.render('geotag.html')
     
+    @tornado.web.asynchronous
     def post(self, op):
         if op == 'update_location':
             ihash = self.get_argument('hash', 'unknown')
@@ -246,6 +247,24 @@ class UploadHandler(BaseHandler):
         
         database.raw_query("SELECT ihash FROM image", (), self._on_hashes)
         
+        
+class StatsHandler(BaseHandler):
+    
+    def on_images(self, images):
+        self.finish(json.dumps(images))
+    
+    @tornado.web.asynchronous
+    def get(self, op):
+        
+        if op == 'get_stats':
+            query = '''SELECT image.id, extract(epoch from moment) as moment, lat, lng, size, make, model, width, height 
+            FROM image LEFT OUTER JOIN camera on image.camera_id = camera.id'''
+            database.raw_query(query, (), self.on_images)
+            
+        else:
+            self.render('stats.html')
+        
+        
 if __name__ == "__main__":
     
     options.parse_command_line() 
@@ -254,6 +273,7 @@ if __name__ == "__main__":
         (r"/", BaseHandler),
         (r"/map/?", MapHandler),
         (r"/geotag/?([^/]+)?/?", GeoHandler),
+        (r"/stats/?([^/]+)?/?", StatsHandler),
         (r"/upload/?", UploadHandler),
         (r'/media/(.*)', tornado.web.StaticFileHandler, {'path': settings.MEDIA_PATH}),
     ], debug=settings.DEBUG, gzip=True,
