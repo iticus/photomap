@@ -16,6 +16,7 @@ from PIL import Image as PilImage
 from StringIO import StringIO
 from tornado.options import options, define
 
+import cache
 import database
 import settings
 import utils
@@ -40,16 +41,22 @@ class BaseHandler(tornado.web.RequestHandler):
 
 class MapHandler(BaseHandler):
     
-    def on_images(self, images):
+    def on_images(self, images, cached=False):
+        if not cached:
+            cache.set_value('geotagged_images', images)
         self.render('map.html', images=images)
     
     @tornado.web.asynchronous
     def get(self):
-        query = '''SELECT image.id, ihash, lat, lng, altitude, extract(epoch from moment) as moment, filename, size, make, model, orientation, path, width, height, image.description 
-        FROM image LEFT OUTER JOIN camera on image.camera_id = camera.id
-        WHERE lat != %s and lng != %s'''
-        data = (0, 0)
-        database.raw_query(query, data, self.on_images)
+        images = cache.get_value('geotagged_images')
+        if images:
+            self.on_images(images, True)
+        else:
+            query = '''SELECT image.id, ihash, lat, lng, altitude, extract(epoch from moment) as moment, filename, size, make, model, orientation, path, width, height, image.description 
+            FROM image LEFT OUTER JOIN camera on image.camera_id = camera.id
+            WHERE lat != %s and lng != %s'''
+            data = (0, 0)
+            database.raw_query(query, data, self.on_images)
     
     def post(self):
         self.finish('POST not allowed')
@@ -62,6 +69,8 @@ class GeoHandler(BaseHandler):
     
     def on_update(self, response):
         if response:
+            cache.del_value('geotagged_images')
+            cache.del_value('stats')
             self.finish('image location updated successfully')
         else:
             self.set_status(400, 'image location not updated')
@@ -109,6 +118,8 @@ class UploadHandler(BaseHandler):
     
     @tornado.web.asynchronous
     def _on_image_save(self, image_id):
+        cache.del_value('geotagged_images')
+        cache.del_value('stats')
         self.finish('image saved, id %d' % image_id[0])
     
     @tornado.web.asynchronous
@@ -250,16 +261,22 @@ class UploadHandler(BaseHandler):
         
 class StatsHandler(BaseHandler):
     
-    def on_images(self, images):
+    def on_images(self, images, cached=False):
+        if not cached:
+            cache.set_value('stats', images)
         self.finish(json.dumps(images))
     
     @tornado.web.asynchronous
     def get(self, op):
         
         if op == 'get_stats':
-            query = '''SELECT image.id, extract(epoch from moment) as moment, lat, lng, size, make, model, width, height 
-            FROM image LEFT OUTER JOIN camera on image.camera_id = camera.id'''
-            database.raw_query(query, (), self.on_images)
+            images = cache.get_value('stats')
+            if images:
+                self.on_images(images, True)
+            else:
+                query = '''SELECT image.id, extract(epoch from moment) as moment, lat, lng, size, make, model, width, height 
+                FROM image LEFT OUTER JOIN camera on image.camera_id = camera.id'''
+                database.raw_query(query, (), self.on_images)
             
         else:
             self.render('stats.html')
