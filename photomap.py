@@ -10,10 +10,13 @@ import json
 import logging
 import os
 import pyexiv2
+import signal
+import time
 import tornado.ioloop
 import tornado.web
 from PIL import Image as PilImage
 from StringIO import StringIO
+from tornado import gen
 from tornado.options import options, define
 
 import cache
@@ -21,9 +24,39 @@ import database
 import settings
 import utils
 
+_status = {'busy': 0, 'messages': []}
+define("port", default=8001, help="listen port", type=int)
 logging.basicConfig(level=settings.LOG_LEVEL, #filename='photomap.log', 
     format='[%(asctime)s] - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-define("port", default=8001, help="listen port", type=int)
+
+
+@gen.engine
+def app_exit():
+    i = 0
+    while i < 9: #supervisord waits 10 seconds before sending SIGKILL
+        if _status['busy'] <= 0:
+            break
+        i += 1
+        logging.info('waiting %d seconds for tasks to finish' % 9-i)
+        yield gen.Task(tornado.ioloop.IOLoop.instance().add_timeout, time.time() + 1)
+    
+    if _status['busy'] <= 0:
+        logging.info('exited cleanly after %d iterations' % i)
+    else:
+        logging.error('forced exit after %d iterations' % i)
+    
+    logging.info('stopping IOloop...')
+    tornado.ioloop.IOLoop.instance().stop()
+
+
+def configure_signals():
+    
+    def stopping_handler(signum, frame):
+        logging.info('interrupt signal %s received, shutting down' % signum)
+        app_exit()
+        
+    signal.signal(signal.SIGINT, stopping_handler)
+    signal.signal(signal.SIGTERM, stopping_handler)
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -45,9 +78,11 @@ class MapHandler(BaseHandler):
         if not cached:
             cache.set_value('geotagged_images', images)
         self.render('map.html', images=images)
+        _status['busy'] -= 1
     
     @tornado.web.asynchronous
     def get(self):
+        _status['busy'] += 1
         images = cache.get_value('geotagged_images')
         if images:
             self.on_images(images, True)
@@ -66,6 +101,7 @@ class GeoHandler(BaseHandler):
     
     def on_images(self, images):
         self.finish(json.dumps(images))
+        _status['busy'] -= 1
     
     def on_update(self, response):
         if response:
@@ -75,11 +111,13 @@ class GeoHandler(BaseHandler):
         else:
             self.set_status(400, 'image location not updated')
             self.finish()
+        _status['busy'] -= 1
     
     @tornado.web.asynchronous
     def get(self, op):
         
         if op == 'get_image_list':
+            _status['busy'] += 1
             start_dt = datetime.datetime.strptime(self.get_argument('start_filter', '2012-12-01'), '%Y-%m-%d')
             stop_dt = datetime.datetime.strptime(self.get_argument('stop_filter', '2015-12-01'), '%Y-%m-%d')
             query = '''SELECT image.id, ihash, extract(epoch from moment) as moment, filename, size, make, model, orientation, path, width, height, image.description 
@@ -97,6 +135,7 @@ class GeoHandler(BaseHandler):
     @tornado.web.asynchronous
     def post(self, op):
         if op == 'update_location':
+            _status['busy'] += 1
             ihash = self.get_argument('hash', 'unknown')
             iid = self.get_argument('id', 0)
             lat = self.get_argument('lat')
@@ -105,6 +144,7 @@ class GeoHandler(BaseHandler):
                 lat = float(lat)
                 lng = float(lng)
             except:
+                _status['busy'] -= 1
                 return self.finish('lat and/or lng invalid')
             
             query = '''UPDATE image set lat=%s, lng=%s WHERE id=%s and ihash=%s RETURNING id'''
@@ -121,6 +161,7 @@ class UploadHandler(BaseHandler):
         cache.del_value('geotagged_images')
         cache.del_value('stats')
         self.finish('image saved, id %d' % image_id[0])
+        _status['busy'] -= 1
     
     @tornado.web.asynchronous
     def _on_image_add(self, image_id):
@@ -186,6 +227,7 @@ class UploadHandler(BaseHandler):
         
         if ihash in self.hashes:
             logging.info('image %s already imported' % ihash)
+            _status['busy'] -= 1
             return self.finish('already imported')
         
         exif_data = pyexiv2.ImageMetadata.from_buffer(self.fileinfo['body'])
@@ -255,7 +297,8 @@ class UploadHandler(BaseHandler):
         secret = self.get_argument('secret', '')
         if secret != settings.SECRET:
             return self.finish('wrong secret')
-        
+
+        _status['busy'] += 1
         database.raw_query("SELECT ihash FROM image", (), self._on_hashes)
         
         
@@ -265,11 +308,12 @@ class StatsHandler(BaseHandler):
         if not cached:
             cache.set_value('stats', images)
         self.finish(json.dumps(images))
+        _status['busy'] -= 1
     
     @tornado.web.asynchronous
     def get(self, op):
-        
         if op == 'get_stats':
+            _status['busy'] += 1
             images = cache.get_value('stats')
             if images:
                 self.on_images(images, True)
@@ -284,8 +328,8 @@ class StatsHandler(BaseHandler):
         
 if __name__ == "__main__":
     
-    options.parse_command_line() 
-    
+    configure_signals()
+    options.parse_command_line()
     application = tornado.web.Application([
         (r"/", BaseHandler),
         (r"/map/?", MapHandler),
