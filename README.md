@@ -13,7 +13,7 @@ Some functions (check screenshots below):
 
 ### Demo
 I will try to get a running version of this software on my home Raspberry PI.
-You can view some screenshots of the development version running on my laptop [here](screenshots.md).
+You can view some screenshots of the development version running on my laptop [here](http://iticus.ro/projects/photomap_screenshots).
 
 ### Requirements
 This web application is written in [Python](https://www.python.org/) and uses the following packages:
