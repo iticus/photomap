@@ -11,7 +11,7 @@ import settings
 
 
 logger = logging.getLogger('db')
-_db = momoko.Pool(dsn=settings.DSN, raise_connect_errors=False)
+_db = momoko.Pool(dsn=settings.DSN, raise_connect_errors=True)
 
 
 def raw_query(query, data, callback):
