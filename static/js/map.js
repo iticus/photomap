@@ -3,7 +3,7 @@ var markers = [];
 var optionPaneState = 0;
 var bounds = new google.maps.LatLngBounds();
 var infoWindow = new google.maps.InfoWindow();
-var mcOptions = {gridSize: 50, maxZoom: 18};
+var mcOptions = {gridSize: 50, maxZoom: 18, imagePath: '/static/images/m'};
 var markerCluster = null;
 var imagesById = {};
 
