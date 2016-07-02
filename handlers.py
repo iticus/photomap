@@ -99,8 +99,7 @@ class GeoHandler(BaseHandler):
                 lng = float(lng)
             except:
                 status['busy'] -= 1
-                self.finish('lat and/or lng invalid')
-                return
+                raise tornado.gen.Return(self.finish('lat and/or lng invalid'))
             
             query = '''UPDATE image set lat=%s, lng=%s WHERE id=%s and ihash=%s RETURNING id'''
             data = (lat, lng, iid, ihash)
@@ -131,7 +130,7 @@ class UploadHandler(BaseHandler):
     def post(self):
         secret = self.get_argument('secret', '')
         if secret != settings.SECRET:
-            return self.finish('wrong secret')
+            raise tornado.gen.Return(self.finish('wrong secret'))
 
         status['busy'] += 1
         images = yield database.raw_query("SELECT ihash FROM image", ())
@@ -147,8 +146,7 @@ class UploadHandler(BaseHandler):
         if ihash in self.hashes:
             logging.info('image %s already imported' % ihash)
             status['busy'] -= 1
-            self.finish('already imported')
-            return
+            raise tornado.gen.Return(self.finish('already imported'))
         
         exif_data = pyexiv2.ImageMetadata.from_buffer(self.fileinfo['body'])
         exif_data.read()
@@ -243,8 +241,6 @@ class UploadHandler(BaseHandler):
                 os.makedirs(directory)
             outfile = directory + '/' + self.image.ihash
             utils.make_thumbnail(image_file, outfile, resolution[0], resolution[1])
-        
-        
         
         database.raw_query('UPDATE image SET path=%s WHERE id=%s RETURNING id', (self.image.path, image_id))
         cache.del_value('geotagged_images')
