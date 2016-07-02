@@ -77,7 +77,7 @@ class GeoHandler(BaseHandler):
             ORDER BY moment ASC
             LIMIT 30'''
             data = (None, None, start_dt, stop_dt)
-            images = yield database.raw_query(query, data, self.on_images)
+            images = yield database.raw_query(query, data)
             self.finish(json.dumps(images))
             status['busy'] -= 1
             
