@@ -7,25 +7,29 @@ Created on Nov 1, 2015
 import datetime
 import logging
 import momoko
+import tornado
+
 import settings
 
 
 logger = logging.getLogger('db')
 _db = momoko.Pool(dsn=settings.DSN, raise_connect_errors=True)
+_db.connect()
 
 
-def raw_query(query, data, callback):
+@tornado.gen.coroutine
+def raw_query(query, data):
+    try:
+        cursor = yield _db.execute(query, data)
+    except Exception as e:
+        logger.error('cannot retrieve record(s): %s' % e)
+        raise tornado.gen.Return(False)
     
-    def on_data(cursor, error):
-            if error:
-                logger.error('cannot retrieve record(s): %s' % error)
-                return callback(False)
-            result = cursor.fetchall()
-            logger.debug('got %d results' % len(result))
-            return callback(result)
-    
-    _db.execute(query, data, callback=on_data)
+    result = cursor.fetchall()
+    logger.debug('got %d results' % len(result))
+    raise tornado.gen.Return(result)
 
+    
 class Album():
 
     #Album
@@ -45,16 +49,8 @@ class Album():
         self.start_moment = start_moment
         self.stop_moment = stop_moment
 
-        
-    def save(self, callback):
-        
-        def on_save(cursor, error):
-            if error:
-                logger.error('cannot save album: %s' % error)
-                return callback(False)
-            result = cursor.fetchall()
-            logger.debug('got result %s saving album' % result)
-            return callback(result[0])
+    @tornado.gen.coroutine
+    def save(self):
         
         if not self.name or not self.description:
             raise 'cannot save album, name or description missing'
@@ -71,25 +67,37 @@ class Album():
         else:
             data.append(self.id)
             query = 'UPDATE album SET name=%s, description=%s, start_moment=%s, stop_moment=%s WHERE id=%s RETURNING id'
-        _db.execute(query, data, callback=on_save)
+            
         
+        try:
+            cursor = yield _db.execute(query, data)
+        except Exception as e:
+            logger.error('cannot save album: %s' % e)
+            raise tornado.gen.Return(False)
+
+        result = cursor.fetchall()
+        logger.debug('got result %s saving album' % result)
+        raise tornado.gen.Return(result[0])
         
-    def delete(self, callback):
-        
-        def on_delete(cursor, error):
-            if error:
-                logger.error('cannot delete album: %s' % error)
-                return callback(False)
-            result = cursor.fetchall()
-            logger.debug('got result %s saving album' % result)
-            return callback(result[0])
+    
+    @tornado.gen.coroutine
+    def delete(self):
         
         if not hasattr(self, 'id'):
             raise 'cannot delete album without id field'
+        
         query = 'DELETE FROM album WHERE id=%s'
         data = (self.id, )
-        _db.execute(query, data, callback=on_delete)
+        try:
+            cursor = yield _db.execute(query, data)
+        except Exception as e:
+            logger.error('cannot delete album: %s' % e)
+            raise tornado.gen.Return(False)
     
+        result = cursor.fetchall()
+        logger.debug('got result %s saving album' % result)
+        raise tornado.gen.Return(result[0])
+
 
 class Camera():
     
@@ -107,15 +115,8 @@ class Camera():
         self.model = model
 
 
-    def save(self, callback):
-        
-        def on_save(cursor, error):
-            if error:
-                logger.error('cannot save camera: %s' % error)
-                return callback(False)
-            result = cursor.fetchall()
-            logger.debug('got result %s saving camera' % result)
-            return callback(result[0])
+    @tornado.gen.coroutine
+    def save(self):
         
         if not self.make or not self.model:
             raise 'cannot save camera, make or model missing'
@@ -129,24 +130,36 @@ class Camera():
         else:
             data.append(self.id)
             query = 'UPDATE camera SET make=%s, model=%s WHERE id=%s RETURNING id'
-        _db.execute(query, data, callback=on_save)
+            
+        try:
+            cursor = yield _db.execute(query, data)
+        except Exception as e:
+            logger.error('cannot save camera: %s' % e)
+            raise tornado.gen.Return(False)
         
+        result = cursor.fetchall()
+        logger.debug('got result %s saving camera' % result)
+        raise tornado.gen.Return(result[0])
         
-    def delete(self, callback):
-        
-        def on_delete(cursor, error):
-            if error:
-                logger.error('cannot delete camera: %s' % error)
-                return callback(False)
-            result = cursor.fetchall()
-            logger.debug('got result %s saving camera' % result)
-            return callback(result[0])
+    
+    @tornado.gen.coroutine
+    def delete(self):
         
         if not hasattr(self, 'id'):
             raise 'cannot delete camera without id field'
+        
         query = 'DELETE FROM camera WHERE id=%s'
         data = (self.id, )
-        _db.execute(query, data, callback=on_delete)
+        
+        try:
+            cursor = yield _db.execute(query, data)
+        except Exception as e:
+            logger.error('cannot delete camera: %s' % e)
+            raise tornado.gen.Return(False)
+        
+        result = cursor.fetchall()
+        logger.debug('got result %s saving camera' % result)
+        raise tornado.gen.Return(result[0])
     
 
 class Image():
@@ -214,15 +227,8 @@ class Image():
         self.access = access
 
     
-    def save(self, callback):
-        
-        def on_save(cursor, error):
-            if error:
-                logger.error('cannot save image: %s' % error)
-                return callback(False)
-            result = cursor.fetchall()
-            logger.debug('got result %s saving image' % result)
-            return callback(result[0])
+    @tornado.gen.coroutine
+    def save(self):
         
         if not self.ihash or not self.moment:
             raise 'cannot save image, ihash or moment missing'
@@ -281,25 +287,37 @@ class Image():
             data.append(self.id)
             query = '''UPDATE image SET ihash=%s, description=%s, album_id=%s, moment=%s, path=%s, filename=%s, width=%s, height=%s, 
             size=%s, camera_id=%s, orientation=%s, lat=%s, lng=%s, altitude=%s, gps_ref=%s, access=%s WHERE id=%s RETURNING id'''
-        _db.execute(query, data, callback=on_save)
         
+        try:
+            cursor = yield _db.execute(query, data)
+        except Exception as e:
+            logger.error('cannot save image: %s' % e)
+            raise tornado.gen.Return(False)
         
-    def delete(self, callback):
+        result = cursor.fetchall()
+        logger.debug('got result %s saving image' % result)
+        raise tornado.gen.Return(result[0])
+
         
-        def on_delete(cursor, error):
-            if error:
-                logger.error('cannot delete image: %s' % error)
-                return callback(False)
-            result = cursor.fetchall()
-            logger.debug('got result %s saving image' % result)
-            return callback(result[0])
+    @tornado.gen.coroutine
+    def delete(self):
         
         if not hasattr(self, 'id'):
             raise 'cannot delete image without id field'
+
         query = 'DELETE FROM image WHERE id=%s'
         data = (self.id, )
-        _db.execute(query, data, callback=on_delete)
-    
+        
+        try:        
+            cursor = yield _db.execute(query, data)
+        except Exception as e:
+            logger.error('cannot delete image: %s' % e)
+            raise tornado.gen.Return(False)
+
+        result = cursor.fetchall()
+        logger.debug('got result %s saving image' % result)
+        raise tornado.gen.Return(result[0])
+
 
 class Tag():
     
@@ -321,16 +339,8 @@ class Tag():
         self.image = image
     
     
-    
-    def save(self, callback):
-        
-        def on_save(cursor, error):
-            if error:
-                logger.error('cannot save tag: %s' % error)
-                return callback(False)
-            result = cursor.fetchall()
-            logger.debug('got result %s saving tag' % result)
-            return callback(result[0])
+    @tornado.gen.coroutine
+    def save(self):
         
         if not self.tag or not self.image:
             raise 'cannot save tag, name or image missing'
@@ -344,21 +354,33 @@ class Tag():
         else:
             data.append(self.id)
             query = 'UPDATE tag SET name=%s, image_id=%s WHERE id=%s RETURNING id'
-        _db.execute(query, data, callback=on_save)
+            
+        try:
+            cursor = yield _db.execute(query, data)
+        except Exception as e:
+            logger.error('cannot save tag: %s' % e)
+            raise tornado.gen.Return(False)
+
+        result = cursor.fetchall()
+        logger.debug('got result %s saving tag' % result)
+        raise tornado.gen.Return(result[0])
         
-        
-    def delete(self, callback):
-        
-        def on_delete(cursor, error):
-            if error:
-                logger.error('cannot delete tag: %s' % error)
-                return callback(False)
-            result = cursor.fetchall()
-            logger.debug('got result %s saving tag' % result)
-            return callback(result[0])
+    
+    @tornado.gen.coroutine    
+    def delete(self):
         
         if not hasattr(self, 'id'):
             raise 'cannot delete tag without id field'
+        
         query = 'DELETE FROM tag WHERE id=%s'
         data = (self.id, )
-        _db.execute(query, data, callback=on_delete)
+        
+        try:
+            cursor = yield _db.execute(query, data)
+        except Exception as e:
+            logger.error('cannot delete tag: %s' % e)
+            raise tornado.gen.Return(False)
+
+        result = cursor.fetchall()
+        logger.debug('got result %s saving tag' % result)
+        raise tornado.gen.Return(result[0])
