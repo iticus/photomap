@@ -28,7 +28,7 @@ def app_exit():
         if status['busy'] <= 0:
             break
         i += 1
-        logging.info('waiting %d seconds for tasks to finish' % 9-i)
+        logging.info('waiting %d seconds for tasks to finish' % (9-i))
         yield gen.Task(tornado.ioloop.IOLoop.instance().add_timeout, time.time() + 1)
     
     if status['busy'] <= 0:

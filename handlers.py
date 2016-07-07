@@ -125,12 +125,13 @@ class UploadHandler(BaseHandler):
         self.render('upload.html')
     
     
-    @tornado.gen.coroutine
     @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def post(self):
         secret = self.get_argument('secret', '')
         if secret != settings.SECRET:
-            raise tornado.gen.Return(self.finish('wrong secret'))
+            self.finish('wrong secret')
+            return
 
         status['busy'] += 1
         images = yield database.raw_query("SELECT ihash FROM image", ())
@@ -146,7 +147,8 @@ class UploadHandler(BaseHandler):
         if ihash in self.hashes:
             logging.info('image %s already imported' % ihash)
             status['busy'] -= 1
-            raise tornado.gen.Return(self.finish('already imported'))
+            self.finish('already imported')
+            return
         
         exif_data = pyexiv2.ImageMetadata.from_buffer(self.fileinfo['body'])
         exif_data.read()
@@ -215,12 +217,14 @@ class UploadHandler(BaseHandler):
                 self.image.camera = self.cameras[key][0]
             else:
                 camera = database.Camera(make=self.camera_make, model=self.camera_model)
-                self.image.camera = camera.save()[0]
+                result = yield camera.save()
+                self.image.camera = result[0]
                 
         else:
             self.image.camera = None
-            
-        image_id = self.image.save()[0]
+        
+        result = yield self.image.save()
+        image_id = result[0]
         path = 'pic' + str(int(image_id)/1000)
         self.image.path = path
         path = 'original/' + path
