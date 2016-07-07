@@ -53,13 +53,13 @@ class Album():
     def save(self):
         
         if not self.name or not self.description:
-            raise 'cannot save album, name or description missing'
+            raise Exception('cannot save album, name or description missing')
         
         if not (0 < len(self.name) < 256) or not (0 < len(self.description) < 8192):
-            raise 'cannot save album, name or description length incorrect'
+            raise Exception('cannot save album, name or description length incorrect')
         
         if not isinstance(self.start_moment, datetime.datetime) or not isinstance(self.stop_moment, datetime.datetime):
-            raise 'cannot save album, start_moment and stop_moment must be of type datetime.datetime'
+            raise Exception('cannot save album, start_moment and stop_moment must be of type datetime.datetime')
         
         data = [self.name, self.description, self.start_moment, self.start_moment]
         if not hasattr(self, 'id'):
@@ -84,7 +84,7 @@ class Album():
     def delete(self):
         
         if not hasattr(self, 'id'):
-            raise 'cannot delete album without id field'
+            raise Exception('cannot delete album without id field')
         
         query = 'DELETE FROM album WHERE id=%s'
         data = (self.id, )
@@ -119,10 +119,10 @@ class Camera():
     def save(self):
         
         if not self.make or not self.model:
-            raise 'cannot save camera, make or model missing'
+            raise Exception('cannot save camera, make or model missing')
         
         if not (0 < len(self.make) < 256) or not (0 < len(self.model) < 256):
-            raise 'cannot save camera, make or model length incorrect'
+            raise Exception('cannot save camera, make or model length incorrect')
         
         data = [self.make, self.model]
         if not hasattr(self, 'id'):
@@ -146,7 +146,7 @@ class Camera():
     def delete(self):
         
         if not hasattr(self, 'id'):
-            raise 'cannot delete camera without id field'
+            raise Exception('cannot delete camera without id field')
         
         query = 'DELETE FROM camera WHERE id=%s'
         data = (self.id, )
@@ -231,52 +231,52 @@ class Image():
     def save(self):
         
         if not self.ihash or not self.moment:
-            raise 'cannot save image, ihash or moment missing'
+            raise Exception('cannot save image, ihash or moment missing')
         
         if not (0 < len(self.ihash) < 64) or not isinstance(self.moment, datetime.datetime):
-            raise 'cannot save image, ihash or moment incorrect'
+            raise Exception('cannot save image, ihash or moment incorrect')
         
         if not self.filename:
-            raise 'cannot save image, path or filename missing'
+            raise Exception('cannot save image, path or filename missing')
         
         if not (0 < len(self.filename) < 64):
-            raise 'cannot save image, filename length incorrect'
+            raise Exception('cannot save image, filename length incorrect')
         
         if self.album and not isinstance(self.album, int):
-            raise 'cannot save image, album info incorrect'
+            raise Exception('cannot save image, album info incorrect')
 
         if self.camera and not isinstance(self.camera, int):
-            raise 'cannot save image, camera info incorrect'
+            raise Exception('cannot save image, camera info incorrect')
 
         if not self.width or not self.height:
-            raise 'cannot save image, width x height info missing'
+            raise Exception('cannot save image, width x height info missing')
         
         if not isinstance(self.width, int) or not isinstance(self.height, int):
-            raise 'cannot save image, width x height info incorrect'
+            raise Exception('cannot save image, width x height info incorrect')
         
         if not self.size or not self.orientation:
-            raise 'cannot save image, size / orientation info missing'
+            raise Exception('cannot save image, size / orientation info missing')
         
         if not isinstance(self.size, int) or not isinstance(self.orientation, int):
-            raise 'cannot save image, size / orientation info incorrect'
+            raise Exception('cannot save image, size / orientation info incorrect')
         
         if self.lat and not isinstance(self.lat, float):
-            raise 'cannot save image, latitude info incorrect'
+            raise Exception('cannot save image, latitude info incorrect')
         
         if self.lng and not isinstance(self.lng, float):
-            raise 'cannot save image, longitude info incorrect'
+            raise Exception('cannot save image, longitude info incorrect')
         
         if self.description and not (0 < len(self.description) < 8192):
-            raise 'cannot save image, description info incorrect'
+            raise Exception('cannot save image, description info incorrect')
         
         if self.gps_ref and not (0 < len(self.gps_ref) < 8):
-            raise 'cannot save image, gps_ref info incorrect'
+            raise Exception('cannot save image, gps_ref info incorrect')
 
         if self.access and not (0 < self.access < 16):
-            raise 'cannot save image, access info incorrect'
+            raise Exception('cannot save image, access info incorrect')
         
         if self.altitude and not isinstance(self.altitude, float):
-            raise 'cannot save image, altitude info incorrect'
+            raise Exception('cannot save image, altitude info incorrect')
 
         data = [self.ihash, self.description, self.album, self.moment, self.path, self.filename, self.width, self.height, 
             self.size, self.camera, self.orientation, self.lat, self.lng, self.altitude, self.gps_ref, self.access]
@@ -303,7 +303,7 @@ class Image():
     def delete(self):
         
         if not hasattr(self, 'id'):
-            raise 'cannot delete image without id field'
+            raise Exception('cannot delete image without id field')
 
         query = 'DELETE FROM image WHERE id=%s'
         data = (self.id, )
@@ -343,10 +343,10 @@ class Tag():
     def save(self):
         
         if not self.tag or not self.image:
-            raise 'cannot save tag, name or image missing'
+            raise Exception('cannot save tag, name or image missing')
         
         if not (0 < len(self.name) < 64) or not isinstance(self.image, int):
-            raise 'cannot save tag, name or image info incorrect'
+            raise Exception('cannot save tag, name or image info incorrect')
         
         data = [self.name, self.image]
         if not hasattr(self, 'id'):
@@ -370,7 +370,7 @@ class Tag():
     def delete(self):
         
         if not hasattr(self, 'id'):
-            raise 'cannot delete tag without id field'
+            raise Exception('cannot delete tag without id field')
         
         query = 'DELETE FROM tag WHERE id=%s'
         data = (self.id, )
