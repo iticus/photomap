@@ -155,8 +155,8 @@ class UploadHandler(BaseHandler):
         
         size = len(self.fileinfo['body'])
         gps_ref = list('NE0')
-        lat = 0
-        lng = 0
+        lat = None
+        lng = None
         altitude = 0
         
         if 'Exif.Image.ImageWidth' in exif_data.keys():
