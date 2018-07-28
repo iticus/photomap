@@ -1,0 +1,14 @@
+[Unit]
+Description=photomap Service
+After=default.target
+
+[Service]
+User=www-data
+Group=www-data
+RestartSec=3
+Restart=always
+WorkingDirectory=/var/www/photomap
+ExecStart=/usr/bin/python photomap.py
+
+[Install]
+WantedBy=default.target
