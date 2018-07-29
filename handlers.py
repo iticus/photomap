@@ -199,8 +199,12 @@ class UploadHandler(BaseHandler):
 
         if 'Exif.GPSInfo.GPSLatitudeRef' in exif_data.keys():
             gps_ref[0] = exif_data['Exif.GPSInfo.GPSLatitudeRef'].value
+            if gps_ref[0] == "S":
+                lat = -1 * lat
         if 'Exif.GPSInfo.GPSLongitudeRef' in exif_data.keys():
             gps_ref[1] = exif_data['Exif.GPSInfo.GPSLongitudeRef'].value
+            if gps_ref[0] == "W":
+                lng = -1 * lng
         if 'Exif.GPSInfo.GPSAltitudeRef' in exif_data.keys():
             gps_ref[2] = exif_data['Exif.GPSInfo.GPSAltitudeRef'].value
 
