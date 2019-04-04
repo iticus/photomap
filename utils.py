@@ -15,6 +15,8 @@ def exif2gps(exif_data):
     :param exif_data: image exif data:
     :return: degress in D.D format
     """
+    if not exif_data:
+        return None
     if isinstance(exif_data[0], tuple):
         degree = float(exif_data[0][0] / exif_data[0][1])
     else:
@@ -72,8 +74,11 @@ def encode_multipart_formdata(fields, files):
     fls.append('')
     output = BytesIO()
     for content in fls:
-        output.write(content)
-        output.write("\r\n")
+        if isinstance(content, bytes):
+            output.write(content)
+        else:
+            output.write(content.encode())
+        output.write(b"\r\n")
     body = output.getvalue()
     content_type = 'multipart/form-data; boundary=%s' % boundary
     return content_type, body

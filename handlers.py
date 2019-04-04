@@ -165,7 +165,7 @@ class UploadHandler(BaseHandler):
         gps_ref = ["N", "E", "0"]
         lat = None
         lng = None
-        altitude = -1
+        altitude = None
 
         if piexif.ExifIFD.PixelXDimension in exif_data.get("Exif", {}):
             width = exif_data["Exif"][piexif.ExifIFD.PixelXDimension]
@@ -175,7 +175,7 @@ class UploadHandler(BaseHandler):
         if "GPS" in exif_data:
             lat = utils.exif2gps(exif_data["GPS"].get(piexif.GPSIFD.GPSLatitude))
             lng = utils.exif2gps(exif_data["GPS"].get(piexif.GPSIFD.GPSLongitude))
-            altitude = exif_data["GPS"].get(piexif.GPSIFD.GPSAltitude, -1)
+            altitude = exif_data["GPS"].get(piexif.GPSIFD.GPSAltitude)
             if isinstance(altitude, tuple):
                 altitude = altitude[0] / altitude[1]
 
