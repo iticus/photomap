@@ -51,7 +51,7 @@ function filterImages(){
 						});
 						//alert($(this).attr('data-hash'));
 						lat = marker.getPosition().lat();
-						lng = marker.getPosition().lng()
+						lng = marker.getPosition().lng();
 						post_data = {'id': $(this).attr('id'), 'hash': $(this).attr('data-hash'), 'lat': lat, 'lng': lng};
 						$.ajax({
 							  url: '/geotag/update_location',

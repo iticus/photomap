@@ -27,7 +27,7 @@ def app_exit():
     Wait for tasks to finish and exit
     """
     i = 0
-    while i < 9: #supervisord waits 10 seconds before sending SIGKILL
+    while i < 9:  # supervisord waits 10 seconds before sending SIGKILL
         if status['busy'] <= 0:
             break
         i += 1

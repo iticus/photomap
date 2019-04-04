@@ -62,7 +62,7 @@ class Album:
 
         data = [self.name, self.description, self.start_moment, self.start_moment]
         if not hasattr(self, 'id'):
-            query = 'INSERT INTO album(name, description, start_moment, stop_moment) VALUES(%s, %s, %s, %s) RETURNING id'
+            query = 'INSERT INTO album(name,description,start_moment,stop_moment) VALUES(%s, %s, %s, %s) RETURNING id'
         else:
             data.append(self.id)
             query = 'UPDATE album SET name=%s, description=%s, start_moment=%s, stop_moment=%s WHERE id=%s RETURNING id'
@@ -157,7 +157,8 @@ class Camera:
 class Image:
 
     def __init__(self, ihash=None, description=None, album=None, moment=None, path=None, filename=None,
-        width=None, height=None, size=None, camera=None, orientation=None, lat=None, lng=None, altitude=None, gps_ref=None, access=None):
+                 width=None, height=None, size=None, camera=None, orientation=None,
+                 lat=None, lng=None, altitude=None, gps_ref=None, access=None):
     
         self.ihash = ihash
         self.description = description
@@ -170,40 +171,41 @@ class Image:
         self.size = size
         self.camera = camera
         self.orientation = orientation
-            # 1: 'Horizontal (normal)'
-            # 2: 'Mirrored horizontal'
-            # 3: 'Rotated 180'
-            # 4: 'Mirrored vertical'
-            # 5: 'Mirrored horizontal then rotated 90 CCW'
-            # 6: 'Rotated 90 CW'
-            # 7: 'Mirrored horizontal then rotated 90 CW'
-            # 8: 'Rotated 90 CCW'
+        # 1: 'Horizontal (normal)'
+        # 2: 'Mirrored horizontal'
+        # 3: 'Rotated 180'
+        # 4: 'Mirrored vertical'
+        # 5: 'Mirrored horizontal then rotated 90 CCW'
+        # 6: 'Rotated 90 CW'
+        # 7: 'Mirrored horizontal then rotated 90 CW'
+        # 8: 'Rotated 90 CCW'
         self.lat = lat
         self.lng = lng
         self.altitude = altitude
         self.gps_ref = gps_ref
         self.access = access
-        self.create_statement = '''CREATE TABLE image(
-              id serial NOT NULL,
-              ihash text NOT NULL,
-              description text NOT NULL,
-              album_id integer,
-              moment timestamp without time zone NOT NULL,
-              path text NOT NULL,
-              filename text NOT NULL,
-              width smallint NOT NULL,
-              height smallint NOT NULL,
-              size integer NOT NULL,
-              camera_id integer,
-              orientation smallint NOT NULL,
-              lat double precision,
-              lng double precision,
-              altitude double precision,
-              gps_ref text NOT NULL,
-              access smallint NOT NULL,
-              CONSTRAINT image_pkey PRIMARY KEY (id),
-              CONSTRAINT image_album_id_fkey FOREIGN KEY (album_id) REFERENCES album(id),
-              CONSTRAINT image_camera_id_fkey FOREIGN KEY (camera_id) REFERENCES camera(id)
+        self.create_statement = '''
+            CREATE TABLE image(
+                id serial NOT NULL,
+                ihash text NOT NULL,
+                description text NOT NULL,
+                album_id integer,
+                moment timestamp without time zone NOT NULL,
+                path text NOT NULL,
+                filename text NOT NULL,
+                width smallint NOT NULL,
+                height smallint NOT NULL,
+                size integer NOT NULL,
+                camera_id integer,
+                orientation smallint NOT NULL,
+                lat double precision,
+                lng double precision,
+                altitude double precision,
+                gps_ref text NOT NULL,
+                access smallint NOT NULL,
+                CONSTRAINT image_pkey PRIMARY KEY (id),
+                CONSTRAINT image_album_id_fkey FOREIGN KEY (album_id) REFERENCES album(id),
+                CONSTRAINT image_camera_id_fkey FOREIGN KEY (camera_id) REFERENCES camera(id)
             );
         CREATE INDEX image_album_id ON album_image USING btree(album_id);
         CREATE INDEX image_camera_id ON album_image USING btree(camera_id);
@@ -264,8 +266,10 @@ class Image:
         if self.altitude and not isinstance(self.altitude, float):
             raise Exception('cannot save image, altitude info incorrect')
 
-        data = [self.ihash, self.description, self.album, self.moment, self.path, self.filename, self.width, self.height, 
-            self.size, self.camera, self.orientation, self.lat, self.lng, self.altitude, self.gps_ref, self.access]
+        data = [
+            self.ihash, self.description, self.album, self.moment, self.path, self.filename, self.width, self.height,
+            self.size, self.camera, self.orientation, self.lat, self.lng, self.altitude, self.gps_ref, self.access
+        ]
         if not hasattr(self, 'id'):
             query = '''INSERT INTO image(ihash, description, album_id, moment, path, filename, width, height, size, camera_id, orientation, 
             lat, lng, altitude, gps_ref, access) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'''

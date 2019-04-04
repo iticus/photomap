@@ -104,7 +104,7 @@ class GeoHandler(BaseHandler):
             try:
                 lat = float(lat)
                 lng = float(lng)
-            except:
+            except ValueError:
                 status['busy'] -= 1
                 raise tornado.gen.Return(self.finish('lat and/or lng invalid'))
 
