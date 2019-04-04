@@ -1,8 +1,8 @@
-'''
+"""
 Created on Nov 25, 2015
 
 @author: ionut
-'''
+"""
 
 import redis
 try:

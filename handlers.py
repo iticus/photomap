@@ -1,17 +1,17 @@
-'''
+"""
 Created on May 24, 2016
 
 @author: ionut
-'''
+"""
 
 import datetime
 import hashlib
 import json
 import logging
 import os
-from StringIO import StringIO
+from io import BytesIO
 
-import pyexiv2
+import piexif
 import tornado.web
 from PIL import Image as PilImage
 
@@ -27,15 +27,12 @@ class BaseHandler(tornado.web.RequestHandler):
     Handler for home, inherited by subsequent handlers
     """
 
-
     def initialize(self):
         pass
-
 
     @tornado.web.asynchronous
     def get(self):
         self.render('base.html')
-
 
     def post(self):
         self.finish('POST not allowed')
@@ -45,7 +42,6 @@ class MapHandler(BaseHandler):
     """
     Handler for /map (main map)
     """
-
 
     @tornado.web.asynchronous
     @tornado.gen.coroutine
@@ -65,7 +61,6 @@ class MapHandler(BaseHandler):
         self.render('map.html', images=images)
         status['busy'] -= 1
 
-
     def post(self):
         self.finish('POST not allowed')
 
@@ -74,7 +69,6 @@ class GeoHandler(BaseHandler):
     """
     Handler for manually geotagging photos (/geotag)
     """
-
 
     @tornado.web.asynchronous
     @tornado.gen.coroutine
@@ -97,7 +91,6 @@ class GeoHandler(BaseHandler):
             status['busy'] -= 1
         else:
             self.render('geotag.html')
-
 
     @tornado.web.asynchronous
     @tornado.gen.coroutine
@@ -137,10 +130,8 @@ class UploadHandler(BaseHandler):
     Handler for manual uploading pictures (manually or via import script)
     """
 
-
     def get(self):
         self.render('upload.html')
-
 
     @tornado.web.asynchronous
     @tornado.gen.coroutine
@@ -167,60 +158,45 @@ class UploadHandler(BaseHandler):
             self.finish('already imported')
             return
 
-        exif_data = pyexiv2.ImageMetadata.from_buffer(fileinfo['body'])
-        exif_data.read()
-
+        exif_data = piexif.load(fileinfo['body'])
         size = len(fileinfo['body'])
-        gps_ref = list('NE0')
+        width = -1
+        height = -1
+        gps_ref = ["N", "E", "0"]
         lat = None
         lng = None
-        altitude = 0
+        altitude = -1
 
-        if 'Exif.Image.ImageWidth' in exif_data.keys():
-            width = int(exif_data['Exif.Image.ImageWidth'].value)
-        elif 'Exif.Photo.PixelXDimension' in exif_data.keys():
-            width = int(exif_data['Exif.Photo.PixelXDimension'].value)
-        else:
-            width = exif_data.dimensions[0]
+        if piexif.ExifIFD.PixelXDimension in exif_data.get("Exif", {}):
+            width = exif_data["Exif"][piexif.ExifIFD.PixelXDimension]
+        if piexif.ExifIFD.PixelYDimension in exif_data.get("Exif", {}):
+            height = exif_data["Exif"][piexif.ExifIFD.PixelYDimension]
 
-        if 'Exif.Image.ImageLength' in exif_data.keys():
-            height = int(exif_data['Exif.Image.ImageLength'].value)
-        elif 'Exif.Photo.PixelYDimension' in exif_data.keys():
-            height = int(exif_data['Exif.Photo.PixelYDimension'].value)
-        else:
-            height = exif_data.dimensions[1]
+        if "GPS" in exif_data:
+            lat = utils.exif2gps(exif_data["GPS"].get(piexif.GPSIFD.GPSLatitude))
+            lng = utils.exif2gps(exif_data["GPS"].get(piexif.GPSIFD.GPSLongitude))
+            altitude = exif_data["GPS"].get(piexif.GPSIFD.GPSAltitude, -1)
+            if isinstance(altitude, tuple):
+                altitude = altitude[0] / altitude[1]
 
-        if 'Exif.GPSInfo.GPSLatitude' in exif_data.keys():
-            lat = utils.exif2gps(exif_data['Exif.GPSInfo.GPSLatitude'].value)
-        if 'Exif.GPSInfo.GPSLongitude' in exif_data.keys():
-            lng = utils.exif2gps(exif_data['Exif.GPSInfo.GPSLongitude'].value)
-        if 'Exif.GPSInfo.GPSAltitude' in exif_data.keys():
-            altitude = float(exif_data['Exif.GPSInfo.GPSAltitude'].value)
+            if piexif.GPSIFD.GPSLatitudeRef in exif_data["GPS"]:
+                gps_ref[0] = exif_data["GPS"].get(piexif.GPSIFD.GPSLatitudeRef, b"").decode()
+                if gps_ref[0] == "S":
+                    lat = -1 * lat
+            if piexif.GPSIFD.GPSLongitudeRef in exif_data["GPS"]:
+                gps_ref[1] = exif_data["GPS"].get(piexif.GPSIFD.GPSLongitudeRef, b"").decode()
+                if gps_ref[0] == "W":
+                    lng = -1 * lng
+            if piexif.GPSIFD.GPSAltitudeRef in exif_data["GPS"]:
+                gps_ref[2] = str(exif_data["GPS"].get(piexif.GPSIFD.GPSAltitudeRef, ""))
 
-        if 'Exif.GPSInfo.GPSLatitudeRef' in exif_data.keys():
-            gps_ref[0] = exif_data['Exif.GPSInfo.GPSLatitudeRef'].value
-            if gps_ref[0] == "S":
-                lat = -1 * lat
-        if 'Exif.GPSInfo.GPSLongitudeRef' in exif_data.keys():
-            gps_ref[1] = exif_data['Exif.GPSInfo.GPSLongitudeRef'].value
-            if gps_ref[0] == "W":
-                lng = -1 * lng
-        if 'Exif.GPSInfo.GPSAltitudeRef' in exif_data.keys():
-            gps_ref[2] = exif_data['Exif.GPSInfo.GPSAltitudeRef'].value
-
-        camera_make = ''
-        camera_model = ''
-        orientation = 1
-        moment = datetime.datetime(1970, 1, 1)
-
-        if 'Exif.Image.Make' in exif_data.keys():
-            camera_make = exif_data['Exif.Image.Make'].value
-        if 'Exif.Image.Model' in exif_data.keys():
-            camera_model = exif_data['Exif.Image.Model'].value
-        if 'Exif.Image.Orientation' in exif_data.keys():
-            orientation = exif_data['Exif.Image.Orientation'].value
-        if 'Exif.Image.DateTime' in exif_data.keys():
-            moment = exif_data['Exif.Image.DateTime'].value
+        camera_make = exif_data["0th"].get(piexif.ImageIFD.Make, b"").decode().strip("\x00")
+        camera_model = exif_data["0th"].get(piexif.ImageIFD.Model, b"").decode().strip("\x00")
+        if camera_make in camera_model:
+            camera_model = camera_model.replace(camera_make, "").strip()
+        orientation = exif_data["0th"].get(piexif.ImageIFD.Orientation, -1)
+        moment = exif_data["0th"].get(piexif.ImageIFD.DateTime, b"1970:01:01 00:00:00")
+        moment = datetime.datetime.strptime(moment.decode(), "%Y:%m:%d %H:%M:%S")
 
         image = database.Image(
             ihash=ihash, description='', album=None,
@@ -247,12 +223,12 @@ class UploadHandler(BaseHandler):
             image.camera = None
 
         result = yield image.save()
-        image_id = result[0]
-        path = 'pic' + str(int(image_id)/1000)
+        image_id = int(result[0])
+        path = 'pic' + str(int(image_id/1000))
         image.path = path
         path = 'original/' + path
 
-        image_file = PilImage.open(StringIO(fileinfo['body']))
+        image_file = PilImage.open(BytesIO(fileinfo['body']))
         directory = settings.MEDIA_PATH + '/' + path
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -282,7 +258,6 @@ class StatsHandler(BaseHandler):
     """
     Handler for rendering image stats
     """
-
 
     @tornado.web.asynchronous
     @tornado.gen.coroutine

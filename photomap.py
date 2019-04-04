@@ -1,8 +1,8 @@
-'''
+"""
 Created on Nov 1, 2015
 
 @author: ionut
-'''
+"""
 
 import logging
 import signal

@@ -1,11 +1,11 @@
-'''
+"""
 Created on Sep 11, 2012
 
 @author: ionut
-'''
+"""
 
 import mimetypes
-from StringIO import StringIO
+from io import BytesIO
 from PIL import Image as PilImage
 
 
@@ -15,9 +15,18 @@ def exif2gps(exif_data):
     :param exif_data: image exif data:
     :return: degress in D.D format
     """
-    degree = float(exif_data[0])
-    minute = float(exif_data[1])
-    second = float(exif_data[2])
+    if isinstance(exif_data[0], tuple):
+        degree = float(exif_data[0][0] / exif_data[0][1])
+    else:
+        degree = float(exif_data[0])
+    if isinstance(exif_data[1], tuple):
+        minute = float(exif_data[1][0] / exif_data[1][1])
+    else:
+        minute = float(exif_data[1])
+    if isinstance(exif_data[2], tuple):
+        second = float(exif_data[2][0] / exif_data[2][1])
+    else:
+        second = float(exif_data[2])
     return degree + minute / 60.0 + second / 3600.0
 
 
@@ -61,7 +70,7 @@ def encode_multipart_formdata(fields, files):
         fls.append(value)
     fls.append('--' + boundary + '--')
     fls.append('')
-    output = StringIO()
+    output = BytesIO()
     for content in fls:
         output.write(content)
         output.write("\r\n")

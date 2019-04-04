@@ -1,0 +1,5 @@
+tornado==4.5.3
+momoko
+redis
+piexif
+pillow

@@ -1,8 +1,8 @@
-'''
+"""
 Created on Nov 1, 2015
 
 @author: ionut
-'''
+"""
 
 import datetime
 import logging
@@ -30,11 +30,10 @@ def raw_query(query, data):
     raise tornado.gen.Return(result)
 
     
-class Album():
+class Album:
     """
     Main album class used for album db interaction
     """
-
 
     def __init__(self, name=None, description=None, start_moment=None, stop_moment=None):
         self.name = name
@@ -49,7 +48,6 @@ class Album():
           stop_moment timestamp without time zone,
           CONSTRAINT album_pkey PRIMARY KEY (id)
         )'''
-
 
     @tornado.gen.coroutine
     def save(self):
@@ -79,7 +77,6 @@ class Album():
         logger.debug('got result %s saving album' % result)
         raise tornado.gen.Return(result[0])
 
-
     @tornado.gen.coroutine
     def delete(self):
         if not hasattr(self, 'id'):
@@ -98,11 +95,10 @@ class Album():
         raise tornado.gen.Return(result[0])
 
 
-class Camera():
+class Camera:
     """
     Main camera module for handling camera objects
     """
-
 
     def __init__(self, make=None, model=None):
         self.make = make
@@ -113,7 +109,6 @@ class Camera():
           model text NOT NULL,
           CONSTRAINT camera_pkey PRIMARY KEY (id)
         )'''
-
 
     @tornado.gen.coroutine
     def save(self):
@@ -140,7 +135,6 @@ class Camera():
         logger.debug('got result %s saving camera' % result)
         raise tornado.gen.Return(result[0])
 
-
     @tornado.gen.coroutine
     def delete(self):
         if not hasattr(self, 'id'):
@@ -160,8 +154,7 @@ class Camera():
         raise tornado.gen.Return(result[0])
 
 
-class Image():
-
+class Image:
 
     def __init__(self, ihash=None, description=None, album=None, moment=None, path=None, filename=None,
         width=None, height=None, size=None, camera=None, orientation=None, lat=None, lng=None, altitude=None, gps_ref=None, access=None):
@@ -220,7 +213,6 @@ class Image():
         CREATE INDEX image_moment ON album_image USING btree(moment);
         CREATE INDEX image_access ON album_image USING btree(access);
         '''
-
 
     @tornado.gen.coroutine
     def save(self):
@@ -292,7 +284,6 @@ class Image():
         logger.debug('got result %s saving image' % result)
         raise tornado.gen.Return(result[0])
 
-
     @tornado.gen.coroutine
     def delete(self):
         if not hasattr(self, 'id'):
@@ -312,11 +303,10 @@ class Image():
         raise tornado.gen.Return(result[0])
 
 
-class Tag():
+class Tag:
     """
     Tag class to manage tag db objects
     """
-
 
     def __init__(self, name=None, image=None):
         self.name = name
@@ -331,7 +321,6 @@ class Tag():
         CREATE INDEX tag_image_id ON album_tag USING btree(image_id);
         CREATE INDEX tag_name ON album_tag USING btree(name);
         '''
-
 
     @tornado.gen.coroutine
     def save(self):
@@ -358,8 +347,7 @@ class Tag():
         logger.debug('got result %s saving tag' % result)
         raise tornado.gen.Return(result[0])
 
-
-    @tornado.gen.coroutine    
+    @tornado.gen.coroutine
     def delete(self):
         if not hasattr(self, 'id'):
             raise Exception('cannot delete tag without id field')
