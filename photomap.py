@@ -76,7 +76,7 @@ def main():
         static_path=settings.STATIC_PATH
     )
 
-    logging.info('starting photomap...')
+    logging.info('starting photomap on port %d...', options.port)
 
     application.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()

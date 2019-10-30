@@ -7,27 +7,27 @@ Created on Nov 1, 2015
 import datetime
 import logging
 import momoko
-import tornado
+from tornado.gen import coroutine
 
 import settings
 
 
-logger = logging.getLogger('db')
+logger = logging.getLogger("db")
 _db = momoko.Pool(dsn=settings.DSN, raise_connect_errors=True)
 _db.connect()
 
 
-@tornado.gen.coroutine
+@coroutine
 def raw_query(query, data):
     try:
         cursor = yield _db.execute(query, data)
     except Exception as e:
-        logger.error('cannot retrieve record(s): %s' % e)
-        raise tornado.gen.Return(False)
+        logger.error("cannot retrieve record(s): %s" % e)
+        return False
 
     result = cursor.fetchall()
-    logger.debug('got %d results' % len(result))
-    raise tornado.gen.Return(result)
+    logger.debug("got %d results", len(result))
+    return result
 
     
 class Album:
@@ -49,7 +49,7 @@ class Album:
           CONSTRAINT album_pkey PRIMARY KEY (id)
         )'''
 
-    @tornado.gen.coroutine
+    @coroutine
     def save(self):
         if not self.name or not self.description:
             raise Exception('cannot save album, name or description missing')
@@ -71,13 +71,13 @@ class Album:
             cursor = yield _db.execute(query, data)
         except Exception as e:
             logger.error('cannot save album: %s' % e)
-            raise tornado.gen.Return(False)
+            return False
 
         result = cursor.fetchall()
         logger.debug('got result %s saving album' % result)
-        raise tornado.gen.Return(result[0])
+        return result[0]
 
-    @tornado.gen.coroutine
+    @coroutine
     def delete(self):
         if not hasattr(self, 'id'):
             raise Exception('cannot delete album without id field')
@@ -88,11 +88,11 @@ class Album:
             cursor = yield _db.execute(query, data)
         except Exception as e:
             logger.error('cannot delete album: %s' % e)
-            raise tornado.gen.Return(False)
+            return False
 
         result = cursor.fetchall()
         logger.debug('got result %s saving album' % result)
-        raise tornado.gen.Return(result[0])
+        return result[0]
 
 
 class Camera:
@@ -110,7 +110,7 @@ class Camera:
           CONSTRAINT camera_pkey PRIMARY KEY (id)
         )'''
 
-    @tornado.gen.coroutine
+    @coroutine
     def save(self):
         if not self.make or not self.model:
             raise Exception('cannot save camera, make or model missing')
@@ -129,13 +129,13 @@ class Camera:
             cursor = yield _db.execute(query, data)
         except Exception as e:
             logger.error('cannot save camera: %s' % e)
-            raise tornado.gen.Return(False)
+            return False
 
         result = cursor.fetchall()
         logger.debug('got result %s saving camera' % result)
-        raise tornado.gen.Return(result[0])
+        return result[0]
 
-    @tornado.gen.coroutine
+    @coroutine
     def delete(self):
         if not hasattr(self, 'id'):
             raise Exception('cannot delete camera without id field')
@@ -147,11 +147,11 @@ class Camera:
             cursor = yield _db.execute(query, data)
         except Exception as e:
             logger.error('cannot delete camera: %s' % e)
-            raise tornado.gen.Return(False)
+            return False
 
         result = cursor.fetchall()
         logger.debug('got result %s saving camera' % result)
-        raise tornado.gen.Return(result[0])
+        return result[0]
 
 
 class Image:
@@ -216,7 +216,7 @@ class Image:
         CREATE INDEX image_access ON album_image USING btree(access);
         '''
 
-    @tornado.gen.coroutine
+    @coroutine
     def save(self):
         if not self.ihash or not self.moment:
             raise Exception('cannot save image, ihash or moment missing')
@@ -271,24 +271,26 @@ class Image:
             self.size, self.camera, self.orientation, self.lat, self.lng, self.altitude, self.gps_ref, self.access
         ]
         if not hasattr(self, 'id'):
-            query = '''INSERT INTO image(ihash, description, album_id, moment, path, filename, width, height, size, camera_id, orientation, 
-            lat, lng, altitude, gps_ref, access) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'''
+            query = '''INSERT INTO image(ihash, description, album_id, moment, path, filename, width, height, size,
+            camera_id, orientation, lat, lng, altitude, gps_ref, access)
+            VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'''
         else:
             data.append(self.id)
-            query = '''UPDATE image SET ihash=%s, description=%s, album_id=%s, moment=%s, path=%s, filename=%s, width=%s, height=%s, 
-            size=%s, camera_id=%s, orientation=%s, lat=%s, lng=%s, altitude=%s, gps_ref=%s, access=%s WHERE id=%s RETURNING id'''
+            query = '''UPDATE image SET ihash=%s, description=%s, album_id=%s, moment=%s, path=%s, filename=%s,
+            width=%s, height=%s, size=%s, camera_id=%s, orientation=%s, lat=%s, lng=%s, altitude=%s, gps_ref=%s,
+            access=%s WHERE id=%s RETURNING id'''
 
         try:
             cursor = yield _db.execute(query, data)
         except Exception as e:
             logger.error('cannot save image: %s' % e)
-            raise tornado.gen.Return(False)
+            return False
 
         result = cursor.fetchall()
         logger.debug('got result %s saving image' % result)
-        raise tornado.gen.Return(result[0])
+        return result[0]
 
-    @tornado.gen.coroutine
+    @coroutine
     def delete(self):
         if not hasattr(self, 'id'):
             raise Exception('cannot delete image without id field')
@@ -300,11 +302,11 @@ class Image:
             cursor = yield _db.execute(query, data)
         except Exception as e:
             logger.error('cannot delete image: %s' % e)
-            raise tornado.gen.Return(False)
+            return False
 
         result = cursor.fetchall()
         logger.debug('got result %s saving image' % result)
-        raise tornado.gen.Return(result[0])
+        return result[0]
 
 
 class Tag:
@@ -326,7 +328,7 @@ class Tag:
         CREATE INDEX tag_name ON album_tag USING btree(name);
         '''
 
-    @tornado.gen.coroutine
+    @coroutine
     def save(self):
         if not self.tag or not self.image:
             raise Exception('cannot save tag, name or image missing')
@@ -345,13 +347,13 @@ class Tag:
             cursor = yield _db.execute(query, data)
         except Exception as e:
             logger.error('cannot save tag: %s' % e)
-            raise tornado.gen.Return(False)
+            return False
 
         result = cursor.fetchall()
         logger.debug('got result %s saving tag' % result)
-        raise tornado.gen.Return(result[0])
+        return result[0]
 
-    @tornado.gen.coroutine
+    @coroutine
     def delete(self):
         if not hasattr(self, 'id'):
             raise Exception('cannot delete tag without id field')
@@ -363,8 +365,8 @@ class Tag:
             cursor = yield _db.execute(query, data)
         except Exception as e:
             logger.error('cannot delete tag: %s' % e)
-            raise tornado.gen.Return(False)
+            return False
 
         result = cursor.fetchall()
         logger.debug('got result %s saving tag' % result)
-        raise tornado.gen.Return(result[0])
+        return result[0]
