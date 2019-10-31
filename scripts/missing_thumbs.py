@@ -11,11 +11,12 @@ from utils import make_thumbnail
 from tornado.gen import coroutine
 
 import database
+from settings import MEDIA_PATH
 
 
 @coroutine
 def main():
-    base_dir = "/media/ionut/nginx/media/"
+    base_dir = MEDIA_PATH
     images = yield database.raw_query("SELECT id, ihash, lat, lng, altitude, path, filename from image", ())
     for image in images:
         ihash = image[1]

@@ -8,14 +8,16 @@ import os
 import piexif
 import tornado
 from tornado.gen import coroutine
+
 import database
+from settings import MEDIA_PATH
 from utils import exif2gps
 
 
 @coroutine
 def main():
     images = yield database.raw_query("SELECT id, ihash, lat, lng, altitude, path, filename from image", ())
-    base_dir = "/media/ionut/nginx/media/original"
+    base_dir = os.path.join(MEDIA_PATH, "original")
     for image in images:
         if not image[3]:
             continue

@@ -13,7 +13,7 @@ def exif2gps(exif_data):
     """
     Transform coordinate from DMS into D.D
     :param exif_data: image exif data:
-    :return: degress in D.D format
+    :return: degrees in D.D format
     """
     if not exif_data:
         return None
