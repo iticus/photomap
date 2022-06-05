@@ -6,21 +6,21 @@ var mcOptions = {gridSize: 50, maxZoom: 18};
 var imagesById = {};
 
 function filterImages(){
-	data = {
-			'album_filter': $('#album_filter').val(),
-			'start_filter': $('#start_filter').val(),
-			'stop_filter': $('#stop_filter').val()
+	let data = {
+		'op': "get_image_list",
+		'album_filter': $('#album_filter').val(),
+		'start_filter': $('#start_filter').val(),
+		'stop_filter': $('#stop_filter').val()
 	}
 	
 	$.ajax({
-		  url: '/geotag/get_image_list',
+		  url: '/geotag',
 		  type: 'GET',
 		  data: data,
-		  success: function(data) {
+		  success: function(images) {
 			    $('#imageList').html('');
 			    imagesById = {};
-			    images = $.parseJSON(data);
-				for ( var i = 0; i < images.length; i++) {
+				for ( let i = 0; i < images.length; i++) {
 					var image = images[i];
 					image['id'] = image[0];
 	 				image['hash'] = image[1];

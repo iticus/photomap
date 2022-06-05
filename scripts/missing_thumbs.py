@@ -7,11 +7,11 @@ import hashlib
 import os
 import tornado
 from PIL import Image as PilImage
-from utils import make_thumbnail
+from photomap.utils import make_thumbnail
 from tornado.gen import coroutine
 
-import database
-from settings import MEDIA_PATH
+from photomap import database
+from photomap.settings import MEDIA_PATH
 
 
 @coroutine

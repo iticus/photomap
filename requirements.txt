@@ -1,5 +1,9 @@
-tornado==4.5.3
-momoko
-redis
+aiohttp
+aiohttp-jinja2
+aioredis
+https://github.com/aio-libs/aiohttp-session/releases/download/v2.11.0/aiohttp-session-2.11.0.tar.gz
+argon2-cffi
 piexif
 pillow
+pydantic
+pytest

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}geotag images - photomap{% endblock %}
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" type="text/css" href="/static/css/geotag.css"/>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCnpLD2dCIZ_2NkA1Y7M-bZsZgv4pNi3f4"></script>
+    <script type="text/javascript" src="/static/js/jquery.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ui.js"></script>
+    <script type="text/javascript" src="/static/js/utils.js"></script>
+    <script type="text/javascript" src="/static/js/geotag.js"></script>
+    <script>
+        window.images = [];
+    </script>
+{% endblock %}
+{% block body %}
+    <div id="mapCanvas"></div>
+    <div id="imageList">
+    </div>
+    <div id="imageOverlay" class="overlay" onclick="closeOverlayContainer()">
+        <div id="overlayContainer">
+        </div>
+    </div>
+    <div id="optionsPane">
+        <div>Marker Clustering (K)</div>
+        <div>
+            <input type="radio" name="markerClustering" onclick="enableClustering()" checked/>ON
+            <input type="radio" name="markerClustering" onclick="disableClustering()"/>OFF
+        </div>
+        <div>
+            <div>
+                Album <input type="text" title="Input album keywords" id="album_filter" value="">
+            </div>
+            <div>
+                Tags <input type="text" title="Input some tags" id="tag_filter" value="">
+            </div>
+            <div>
+                Description <input type="text" title="Input description keywords" id="description_filter" value="">
+            </div>
+            <div>
+                Interval <input type="text" title="Input start date" id="start_filter" value=""> -
+                <input type="text" title="Input stop date" id="stop_filter" value="">
+            </div>
+            <div>
+                Camera <input type="text" title="Input camera keywords" id="camera_filter" value="">
+            </div>
+            <div>
+                Position
+                <div>
+                    Start <input type="text" title="Input start latitude" id="start_lat" value=""> -
+                    <input type="text" title="Input start longitude" id="start_lng" value=""> <br/>
+                    Stop <input type="text" title="Input stop latitude" id="stop_lat" value=""> -
+                    <input type="text" title="Input stop longitude" id="stop_lng" value="">
+                </div>
+            </div>
+            <button name="button" onClick="filterImages()">Filter</button>
+        </div>
+    </div>
+{% endblock %}
+	

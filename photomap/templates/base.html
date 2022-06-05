@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8; IE=EmulateIE9">
+    <title>{% block title %}Photomap{% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/base.css"/>
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/js/jquery-ui.js"></script>
+    {% endblock %}
+</head>
+<body>
+{% block body %}
+    <a href="map/">Map</a>
+    <a href="geotag/">Geotag</a>
+    <a href="stats/">Stats</a>
+{% endblock %}
+</body>
+</html>

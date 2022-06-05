@@ -9,9 +9,9 @@ import piexif
 import tornado
 from tornado.gen import coroutine
 
-import database
-from settings import MEDIA_PATH
-from utils import exif2gps
+from photomap import database
+from photomap.settings import MEDIA_PATH
+from photomap.utils import exif2gps
 
 
 @coroutine

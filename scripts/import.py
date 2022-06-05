@@ -11,8 +11,7 @@ from functools import partial
 from random import shuffle
 from tornado import ioloop
 
-import settings
-import utils
+from photomap import settings, utils
 
 BASE_DIR = "/media/ionut/Poze/One S9"
 NUM_PROCS = 1

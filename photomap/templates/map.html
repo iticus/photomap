@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+	{% block title %}Main map - photomap{% endblock %}
+	{% block head %}
+        {{ super() }}
+	    <link rel="stylesheet" type="text/css" href="/static/css/base.css" />
+	    <link rel="stylesheet" type="text/css" href="/static/css/map.css" />
+		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCnpLD2dCIZ_2NkA1Y7M-bZsZgv4pNi3f4"></script>
+	    <script type="text/javascript" src="/static/js/jquery.js"></script>
+	    <script type="text/javascript" src="/static/js/jquery-ui.js"></script>
+    	<script type="text/javascript" src="/static/js/jquery.tools.min.js"></script>
+    	<script type="text/javascript" src="/static/js/markerclusterer.js"></script>
+    	<script type="text/javascript" src="/static/js/utils.js"></script>
+	    <script type="text/javascript" src="/static/js/map.js"></script>
+	 <script>
+	    let images = [];
+ 		{% for image in images %}
+ 			images.push({
+ 				"id": {{ image.id }},
+ 				"hash": "{{ image.ihash }}",
+ 				"lat": {{ image.lat }},
+ 				"lng": {{ image.lng }},
+ 				"altitude": {{ image.altitude }},
+ 				"moment": new Date({{ image.moment }} * 1000),
+ 				"filename": "{{ image.filename }}",
+ 				"size": {{ image.size }},
+ 				"camera": "{{ image.make }}" + " " + "{{ image.model }}",
+ 				"orientation": "{{ image.orientation }}",
+ 				"path": "{{ image.path }}",
+ 				"width": "{{ image.width }}",
+ 				"height": "{{ image.height }}",
+ 				"description": "{{ image.description }}"
+ 			});
+        {% endfor %}
+    </script>
+	{% endblock %}
+	
+	{% block body %}
+	<body>	
+	    <div id="mapCanvas"></div>
+	    
+	    <div id="imageOverlay" class="overlay" onclick="closeOverlayContainer()">
+	    	<div id="overlayContainer">
+	    	</div>
+	    </div>
+	    
+	    <div id="optionsPane">
+	    	<span>Marker Clustering (K)</span>
+	   		<input type="radio" name="markerClustering" onclick="enableClustering()" checked />ON<br>
+	   		<input type="radio" name="markerClustering" onclick="disableClustering()" />OFF<br>
+	    </div>
+	</body>
+	{% endblock %}

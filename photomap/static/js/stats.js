@@ -7,12 +7,11 @@ google.load("visualization", "1.1", {packages:["table"]});
 function initializeStats() {
 	
 	$.ajax({
-		  url: '/stats/get_stats',
+		  url: '/stats?op=get_stats',
 		  type: 'GET',
-		  success: function(data) {
+		  success: function(images) {
 			    imagesById = {};
-			    images = $.parseJSON(data);
-			    var tableData = new google.visualization.DataTable();
+			    let tableData = new google.visualization.DataTable();
 			    tableData.addColumn('string', 'Camera');
 			    tableData.addColumn('number', 'Total');
 			    tableData.addColumn('number', 'Valid Position');
@@ -23,21 +22,21 @@ function initializeStats() {
 				for ( var i = 0; i < images.length; i++) {
 					image = images[i];
 					//image.id, extract(epoch from moment) as moment, lat, lng, size, make, model, width, height
-					imagesById[image[0]] = image;
-					var camera = image[5] + ' ' + image[6];
+					imagesById[image.id] = image;
+					var camera = image.make + ' ' + image.model;
 					if (!(camera in cameras)) {
 						cameras[camera] = {'total': 0, 'valid_pos': 0, 'start': 2000000000, 'stop': 0, 'size': 0};
 					}
 					cameras[camera]['total'] += 1;
-					cameras[camera]['size'] += image[4] / 1000000;
-					if (image[2] && image[3]) {
+					cameras[camera]['size'] += image.size / 1000000;
+					if (image.lat && image.lng) {
 						cameras[camera]['valid_pos'] += 1;
 					};
-					if (image[1] < cameras[camera]['start']) {
-						cameras[camera]['start'] = image[1];
+					if (image.moment < cameras[camera]['start']) {
+						cameras[camera]['start'] = image.moment;
 					}
-					if (image[1] > cameras[camera]['stop']) {
-						cameras[camera]['stop'] = image[1];
+					if (image.moment > cameras[camera]['stop']) {
+						cameras[camera]['stop'] = image.moment;
 					}
 				}
 				
