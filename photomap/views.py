@@ -98,7 +98,7 @@ class Map(BaseView):
             images = [dict(photo) for photo in images]
             await cache.set_value(self.cache, "geotagged_images", images)
         # "session": self.session
-        context = {"images": images}
+        context = {"images": images, "google_maps_key": self.config.GOOGLE_MAPS_KEY}
         return aiohttp_jinja2.render_template("map.html", self.request, context=context)
 
 
@@ -114,7 +114,8 @@ class Geo(BaseView):
             stop_dt = datetime.datetime.strptime(self.request.query.get("stop_filter", "2021-12-01"), "%Y-%m-%d")
             images = await self.database.get_images_nogps(start_dt, stop_dt)
             return web.json_response([dict(image) for image in images])
-        return aiohttp_jinja2.render_template("geotag.html", self.request, context={})
+        context = {"google_maps_key": self.config.GOOGLE_MAPS_KEY}
+        return aiohttp_jinja2.render_template("geotag.html", self.request, context=context)
 
     async def post(self, op):
         if op == "update_location":

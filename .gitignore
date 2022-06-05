@@ -1,6 +1,6 @@
 *.log
 *.pyc
-/settings.py
+/photomap/settings.py
 .project
 .pydevproject
 .venv/
