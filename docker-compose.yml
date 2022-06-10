@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+
+  db:
+    image: postgres:13
+    network_mode: "host"
+    environment:
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: photomap
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  photomap_service:
+    build: .
+    network_mode: "host"
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres-data:
