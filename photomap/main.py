@@ -50,7 +50,7 @@ async def shutdown(app):
 
 
 def make_app():
-    app = web.Application()
+    app = web.Application(client_max_size=64*1000*1000)
     app.router.add_view("/", views.Home)
     app.router.add_view("/map{tail:.*?}", views.Map)
     app.router.add_view("/login{tail:.*?}", views.Login)

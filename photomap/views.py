@@ -6,22 +6,19 @@ Created on May 24, 2016
 
 import datetime
 import hashlib
-import json
 import logging
-import os
-from io import BytesIO
 
 import aiohttp_jinja2
 from aiohttp import web
 
-from PIL import Image as PilImage
 from aiohttp.web_fileresponse import FileResponse
-from aiohttp_session import get_session
+from aiohttp_session import get_session, new_session
 
 import cache
 import database
-import utils
-import settings
+from photo import parse_exif
+
+logger = logging.getLogger(__name__)
 
 
 class BaseView(web.View):
@@ -131,7 +128,7 @@ class Geo(BaseView):
 
             query = """UPDATE image set lat=%s, lng=%s WHERE id=%s and ihash=%s RETURNING id"""
             data = (lat, lng, iid, ihash)
-            response = await database.raw_query(query, data)
+            response = await self.database.raw_query(query, data)
             if response:
                 cache.del_value(self.cache, "geotagged_images")
                 cache.del_value(self.cache, "stats")
@@ -150,81 +147,66 @@ class Upload(BaseView):
     """
 
     async def get(self):
-        self.render("upload.html")
+        return aiohttp_jinja2.render_template("upload.html", self.request, context={})
 
     async def post(self):
-        secret = self.get_argument("secret", "")
-        if secret != settings.SECRET:
-            self.finish("wrong secret")
-            return
+        secret = self.request.headers.get("Authentication", "")
+        if secret != self.config.SECRET:
+            return web.json_response({"status": "error", "details": "invalid secret value"}, status=403)
 
-        images = await database.raw_query("SELECT ihash FROM image", ())
+        # TODO: use local cache for photo data
+        geotagged_images = await self.database.get_geotagged_images()
+        nogps_images = await self.database.get_images_nogps(datetime. datetime(1000, 1, 1), datetime.datetime(3000, 1, 1))
         hashes = set()
-        for image in images:
-            hashes.add(image[0])
+        for photo in geotagged_images + nogps_images:
+            hashes.add(photo["ihash"])
 
-        fileinfo = self.request.files["image"][0]
+        data = await self.request.post()
+        fileinfo = data["image"]
+        filename = fileinfo.filename
+        file_body = fileinfo.file.read()
         sha1 = hashlib.sha1()
-        sha1.update(fileinfo["body"])
+        sha1.update(file_body)
         ihash = sha1.hexdigest()
 
         if ihash in hashes:
-            logging.info("image %s already imported", ihash)
-            self.finish("already imported")
-            return
+            logger.info("image %s already imported", ihash)
+            return web.json_response({"status": "error", "details": "invalid secret value"}, status=403)
 
-        exif_data = parse_exif(fileinfo["body"])
-        size = len(fileinfo["body"])
-        image = database.Image(
-            ihash=ihash, description="", album=None,
-            moment=moment, width=width, height=height, orientation=orientation,
-            filename=fileinfo["filename"], size=size, path="",
-            lat=lat, lng=lng, altitude=altitude, gps_ref="".join(gps_ref), access=0
+        exif_data = parse_exif(file_body)
+        size = len(file_body)
+        photo = database.Photo(
+            photo_id=None, camera=None, ihash=ihash, description="", album=None,
+            moment=exif_data["moment"], width=exif_data["width"], height=exif_data["height"],
+            orientation=exif_data["orientation"],filename=filename, size=size, path="",
+            lat=exif_data["lat"], lng=exif_data["lng"], altitude=exif_data["altitude"],
+            gps_ref="".join(exif_data["gps_ref"]), access=1
         )
 
-        cameras = yield database.raw_query("SELECT id, make, model FROM camera", ())
+        cameras = await self.database.get_cameras()
         camera_dict = {}
         for camera in cameras:
             camera_dict[camera[1] + "_" + camera[2]] = camera
 
-        if camera_make or camera_model:
-            key = camera_make + "_" + camera_model
+        if exif_data["camera_make"] or exif_data["camera_model"]:
+            key = exif_data["camera_make"] + "_" + exif_data["camera_model"]
             if key in camera_dict:
-                image.camera = camera_dict[key][0]
+                photo.camera = camera_dict[key][0]
             else:
-                camera = database.Camera(make=camera_make, model=camera_model)
-                result = yield camera.save()
-                image.camera = result[0]
-
+                camera = database.Camera(make=exif_data["camera_make"], model=exif_data["camera_model"])
+                result = await camera.save()
+                photo.camera = result["id"]
         else:
-            image.camera = None
+            photo.camera = None
 
-        result = yield image.save()
-        image_id = int(result[0])
+        result = await photo.save()
+        image_id = int(result["id"])
         path = "pic" + str(int(image_id/1000))
-        image.path = path
+        photo.path = path
         path = "original/" + path
 
-        image_file = PilImage.open(BytesIO(fileinfo["body"]))
-        directory = settings.MEDIA_PATH + "/" + path
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-        output_file = open(directory + "/" + image.ihash, "wb")
-        output_file.write(fileinfo["body"])
-        output_file.close()
-
-        resolutions = [(64, 64), (192, 192), (960, 960)]
-        for resolution in resolutions:
-            directory = settings.MEDIA_PATH + "/thumbnails/" + str(resolution[0])
-            directory += "px/pic" + str(int(image_id)/1000)
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            outfile = directory + "/" + image.ihash
-            utils.make_thumbnail(image_file, outfile, resolution[0], resolution[1])
-
         database.raw_query("UPDATE image SET path=%s WHERE id=%s RETURNING id",
-                           (image.path, image_id))
+                           (photo.path, image_id))
         await cache.del_value(self.cache, "geotagged_images")
         await cache.del_value(self.cache, "stats")
         self.finish("image saved, id %d" % image_id)

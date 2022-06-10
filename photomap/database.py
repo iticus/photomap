@@ -44,7 +44,7 @@ class Photo:
     """
     Main photo class
     """
-    photo_id: int
+    photo_id: Optional[int]
     album: Optional[int]
     camera: Optional[int]
     moment: datetime.datetime
