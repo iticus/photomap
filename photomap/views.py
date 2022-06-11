@@ -16,7 +16,7 @@ from aiohttp_session import get_session, new_session
 
 import cache
 import database
-from photo import parse_exif
+from photo import parse_exif, load_image, make_thumbnails
 
 logger = logging.getLogger(__name__)
 
@@ -89,13 +89,13 @@ class Map(BaseView):
     """
 
     async def get(self):
-        images = await cache.get_value(self.cache, "geotagged_images")
-        if not images:
-            images = await self.database.get_geotagged_images()
-            images = [dict(photo) for photo in images]
-            await cache.set_value(self.cache, "geotagged_images", images)
+        photos = await cache.get_value(self.cache, "geotagged_photos")
+        if not photos:
+            photos = await self.database.get_geotagged_photos()
+            photos = [dict(photo) for photo in photos]
+            await cache.set_value(self.cache, "geotagged_photos", photos)
         # "session": self.session
-        context = {"images": images, "google_maps_key": self.config.GOOGLE_MAPS_KEY}
+        context = {"photos": photos, "google_maps_key": self.config.GOOGLE_MAPS_KEY}
         return aiohttp_jinja2.render_template("map.html", self.request, context=context)
 
 
@@ -106,11 +106,11 @@ class Geo(BaseView):
 
     async def get(self):
         op = self.request.query.get("op")
-        if op == "get_image_list":
+        if op == "get_photo_list":
             start_dt = datetime.datetime.strptime(self.request.query.get("start_filter", "2018-12-01"), "%Y-%m-%d")
             stop_dt = datetime.datetime.strptime(self.request.query.get("stop_filter", "2021-12-01"), "%Y-%m-%d")
-            images = await self.database.get_images_nogps(start_dt, stop_dt)
-            return web.json_response([dict(image) for image in images])
+            photos = await self.database.get_photos_nogps(start_dt, stop_dt)
+            return web.json_response([dict(photo) for photo in photos])
         context = {"google_maps_key": self.config.GOOGLE_MAPS_KEY}
         return aiohttp_jinja2.render_template("geotag.html", self.request, context=context)
 
@@ -130,11 +130,11 @@ class Geo(BaseView):
             data = (lat, lng, iid, ihash)
             response = await self.database.raw_query(query, data)
             if response:
-                cache.del_value(self.cache, "geotagged_images")
+                cache.del_value(self.cache, "geotagged_photos")
                 cache.del_value(self.cache, "stats")
-                self.finish("image location updated successfully")
+                self.finish("photo location updated successfully")
             else:
-                self.set_status(400, "image location not updated")
+                self.set_status(400, "photo location not updated")
                 self.finish()
 
         else:
@@ -155,10 +155,12 @@ class Upload(BaseView):
             return web.json_response({"status": "error", "details": "invalid secret value"}, status=403)
 
         # TODO: use local cache for photo data
-        geotagged_images = await self.database.get_geotagged_images()
-        nogps_images = await self.database.get_images_nogps(datetime. datetime(1000, 1, 1), datetime.datetime(3000, 1, 1))
+        geotagged_photos = await self.database.get_geotagged_photos()
+        nogps_photos = await self.database.get_photos_nogps(
+            datetime.datetime(1000, 1, 1), datetime.datetime(3000, 1, 1)
+        )
         hashes = set()
-        for photo in geotagged_images + nogps_images:
+        for photo in geotagged_photos + nogps_photos:
             hashes.add(photo["ihash"])
 
         data = await self.request.post()
@@ -169,16 +171,16 @@ class Upload(BaseView):
         sha1.update(file_body)
         ihash = sha1.hexdigest()
 
-        if ihash in hashes:
-            logger.info("image %s already imported", ihash)
-            return web.json_response({"status": "error", "details": "invalid secret value"}, status=403)
+        # if ihash in hashes:
+        #     logger.info("photo %s already imported", ihash)
+        #     return web.json_response({"status": "error", "details": "photo hash already exists"}, status=409)
 
-        exif_data = parse_exif(file_body)
-        size = len(file_body)
+        image_file = load_image(file_body)
+        exif_data = parse_exif(file_body, image_file)
         photo = database.Photo(
             photo_id=None, camera=None, ihash=ihash, description="", album=None,
             moment=exif_data["moment"], width=exif_data["width"], height=exif_data["height"],
-            orientation=exif_data["orientation"],filename=filename, size=size, path="",
+            orientation=exif_data["orientation"],filename=filename, size=exif_data["size"], path="",
             lat=exif_data["lat"], lng=exif_data["lng"], altitude=exif_data["altitude"],
             gps_ref="".join(exif_data["gps_ref"]), access=1
         )
@@ -187,34 +189,34 @@ class Upload(BaseView):
         camera_dict = {}
         for camera in cameras:
             camera_dict[camera[1] + "_" + camera[2]] = camera
-
         if exif_data["camera_make"] or exif_data["camera_model"]:
             key = exif_data["camera_make"] + "_" + exif_data["camera_model"]
             if key in camera_dict:
-                photo.camera = camera_dict[key][0]
+                photo.camera = camera_dict[key]["id"]
             else:
-                camera = database.Camera(make=exif_data["camera_make"], model=exif_data["camera_model"])
-                result = await camera.save()
+                camera = database.Camera(camera_id=None, make=exif_data["camera_make"], model=exif_data["camera_model"])
+                result = await self.database.save_camera(camera)
                 photo.camera = result["id"]
         else:
             photo.camera = None
 
-        result = await photo.save()
-        image_id = int(result["id"])
-        path = "pic" + str(int(image_id/1000))
-        photo.path = path
-        path = "original/" + path
+        # temp fix
+        if ihash in hashes:
+            logger.info("photo %s already imported", ihash)
+            make_thumbnails(image_file, photo, self.config.MEDIA_PATH)
+            return web.json_response({"status": "error", "details": "photo hash already exists"}, status=409)
 
-        database.raw_query("UPDATE image SET path=%s WHERE id=%s RETURNING id",
-                           (photo.path, image_id))
+        result = await self.database.save_photo(photo)
+        photo_id = int(result["id"])
+        make_thumbnails(image_file, photo, self.config.MEDIA_PATH)
         await cache.del_value(self.cache, "geotagged_images")
         await cache.del_value(self.cache, "stats")
-        self.finish("image saved, id %d" % image_id)
+        return web.json_response({"status": "ok", "message": f"photo saved, id {photo_id}"})
 
 
 class Stats(BaseView):
     """
-    Handler for rendering image stats
+    Handler for rendering photo stats
     """
 
     async def get(self):

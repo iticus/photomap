@@ -13,22 +13,22 @@
 	    <script type="text/javascript" src="/static/js/map.js"></script>
 	 <script>
 	    let images = [];
- 		{% for image in images %}
+ 		{% for photo in photos %}
  			images.push({
- 				"id": {{ image.id }},
- 				"hash": "{{ image.ihash }}",
- 				"lat": {{ image.lat }},
- 				"lng": {{ image.lng }},
- 				"altitude": {{ image.altitude }},
- 				"moment": new Date({{ image.moment }} * 1000),
- 				"filename": "{{ image.filename }}",
- 				"size": {{ image.size }},
- 				"camera": "{{ image.make }}" + " " + "{{ image.model }}",
- 				"orientation": "{{ image.orientation }}",
- 				"path": "{{ image.path }}",
- 				"width": "{{ image.width }}",
- 				"height": "{{ image.height }}",
- 				"description": "{{ image.description }}"
+ 				"id": {{ photo.id }},
+ 				"hash": "{{ photo.ihash }}",
+ 				"lat": {{ photo.lat }},
+ 				"lng": {{ photo.lng }},
+ 				"altitude": {{ photo.altitude }},
+ 				"moment": new Date({{ photo.moment }} * 1000),
+ 				"filename": "{{ photo.filename }}",
+ 				"size": {{ photo.size }},
+ 				"camera": "{{ photo.make }}" + " " + "{{ photo.model }}",
+ 				"orientation": "{{ photo.orientation }}",
+ 				"path": "{{ photo.path }}",
+ 				"width": "{{ photo.width }}",
+ 				"height": "{{ photo.height }}",
+ 				"description": "{{ photo.description }}"
  			});
         {% endfor %}
     </script>

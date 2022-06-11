@@ -4,8 +4,7 @@ Created on Sep 11, 2012
 @author: ionut
 """
 
-import mimetypes
-from io import BytesIO
+import os
 from PIL import Image as PilImage
 
 
@@ -49,48 +48,9 @@ def make_thumbnail(image, outfile, width, height):
         print('cannot create thumbnail for %s: %s' % (image.filename, exc))
 
 
-def encode_multipart_formdata(fields, files):
-    """
-    Encode multipart data to be used in data import
-    adapted from: http://code.activestate.com/recipes/146306/
-    :param fields: sequence of (name, value) elements for regular form fields.
-    :param files:  sequence of (name, filename, value) elements for data to be uploaded as files
-    :return: (content_type, body) ready for httplib.HTTP instance
-    """
-    boundary = '-------tHISiSsoMeMulTIFoRMbOUNDaRY---'
-    fls = []
-    for (key, value) in fields:
-        fls.append('--' + boundary)
-        fls.append('Content-Disposition: form-data; name="%s"' % key)
-        fls.append('')
-        fls.append(value)
-    for (key, filename, value) in files:
-        fls.append('--' + boundary)
-        fls.append('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename))
-        fls.append('Content-Type: %s' % get_content_type(filename))
-        fls.append('')
-        fls.append(value)
-    fls.append('--' + boundary + '--')
-    fls.append('')
-    output = BytesIO()
-    for content in fls:
-        if isinstance(content, bytes):
-            output.write(content)
-        else:
-            output.write(content.encode())
-        output.write(b"\r\n")
-    body = output.getvalue()
-    content_type = 'multipart/form-data; boundary=%s' % boundary
-    return content_type, body
-
-
-def get_content_type(filename):
-    """
-    Detect file content type using mime
-    :param filename: input filename:
-    :return: detected file mimetype
-    """
-    return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+def generate_path(base_path: str, ihash: str) -> str:
+    path = os.path.join(base_path, ihash[0], ihash[1])
+    return path
 
 
 def main():

@@ -21,12 +21,11 @@ class Album:
     """
     Main album class
     """
-    album_id: int
+    album_id: Optional[int]
     start_moment: datetime.datetime = Field(None, title="Album earliest date")
     stop_moment: datetime.datetime = Field(None, title="Album latest date")
     name: str = Field(None, title="Album name", max_length=256)
     description: str = Field(None, title="Album name", max_length=8192)
-
 
 
 @dataclass
@@ -34,7 +33,7 @@ class Camera:
     """
     Main camera class
     """
-    camera_id: int
+    camera_id: Optional[int]
     make: str = Field(None, title="Camera make", max_length=256)
     model: str = Field(None, title="Camera model", max_length=256)
 
@@ -129,6 +128,15 @@ class Database:
             await self.pool.release(conn)
         return camera_id
 
+    async def get_cameras(self):
+        conn = await self.pool.acquire()
+        query = "SELECT id, make, model FROM camera"
+        try:
+            cameras = await conn.fetch(query)
+        finally:
+            await self.pool.release(conn)
+        return cameras
+
     async def delete_camera(self, camera_id: int):
         conn = await self.pool.acquire()
         query = "DELETE FROM camera WHERE id=$1"
@@ -137,15 +145,15 @@ class Database:
         finally:
             await self.pool.release(conn)
 
-    async def save_image(self, image: Photo) -> int:
+    async def save_photo(self, photo: Photo) -> int:
         conn = await self.pool.acquire()
         data = [
-            image.ihash, image.description, image.album, image.moment, image.path, image.filename,
-            image.width, image.height, image.size, image.camera, image.orientation,
-            image.lat, image.lng, image.altitude, image.gps_ref, image.access
+            photo.ihash, photo.description, photo.album, photo.moment, photo.path, photo.filename,
+            photo.width, photo.height, photo.size, photo.camera, photo.orientation,
+            photo.lat, photo.lng, photo.altitude, photo.gps_ref, photo.access
         ]
-        if hasattr(image, "id"):
-            data.append(image.id)
+        if hasattr(photo, "id"):
+            data.append(photo.id)
             query = """UPDATE image SET ihash=$1, description=$2, album_id=$3, moment=$4, path=$5, filename=$6,
                    width=$7, height=$8, size=$9, camera_id=$10, orientation=$11, lat=$12, lng=$13, altitude=$14, 
                    gps_ref=$15, access=$16 WHERE id=$17 RETURNING id"""
@@ -159,41 +167,41 @@ class Database:
             await self.pool.release(conn)
         return image_id
 
-    async def delete_image(self, image_id: int):
+    async def delete_photo(self, photo_id: int):
         conn = await self.pool.acquire()
         query = "DELETE FROM image WHERE id=$1"
         try:
-            await conn.fetchrow(query, image_id)
+            await conn.fetchrow(query, photo_id)
         finally:
             await self.pool.release(conn)
 
-    async def get_geotagged_images(self):
+    async def get_geotagged_photos(self):
         conn = await self.pool.acquire()
         query = """SELECT image.id, ihash, lat, lng, altitude, extract(epoch from moment) as moment,
                 filename, size, make, model, orientation, path, width, height, image.description
                 FROM image LEFT OUTER JOIN camera on image.camera_id = camera.id
                 WHERE lat IS NOT NULL AND lng IS NOT NULL"""
         try:
-            images = await conn.fetch(query)
+            photos = await conn.fetch(query)
         finally:
             await self.pool.release(conn)
-        return images
+        return photos
 
-    async def get_images_nogps(self, start_moment: datetime.datetime, stop_moment:datetime.datetime):
+    async def get_photos_nogps(self, start_moment: datetime.datetime, stop_moment:datetime.datetime):
         conn = await self.pool.acquire()
         query = """SELECT image.id, ihash, extract(epoch from moment) as moment, filename, size,
                 make, model, orientation, path, width, height, image.description
                 FROM image LEFT OUTER JOIN camera on image.camera_id = camera.id
                 WHERE (lat IS NULL OR lng IS NULL) AND moment BETWEEN $1 AND $2 ORDER BY moment ASC LIMIT 30"""
         try:
-            images = await conn.fetch(query, start_moment, stop_moment)
+            photos = await conn.fetch(query, start_moment, stop_moment)
         finally:
             await self.pool.release(conn)
-        return images
+        return photos
 
     async def save_tag(self, tag: Tag) -> int:
         conn = await self.pool.acquire()
-        data = [self.name, self.image]
+        data = [tag.name, tag.image]
         if not hasattr(tag, "id"):
             data.append(tag.id)
             query = "UPDATE tag SET name=$1, image_id=$2 WHERE id=$3 RETURNING id"
