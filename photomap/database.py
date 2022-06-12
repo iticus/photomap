@@ -62,7 +62,7 @@ class Photo:
     lng: float = Field(None, title="Longitude (deg)", ge=-180, le=180)
     altitude: float = Field(None, title="Altitude (m)", ge=0, le=12000)
     gps_ref: str = Field(None, title="GPS reference (NE0)",  min_length=3, max_length=3)
-    access: int = Field(None, title="Image permissions (rw)", gt=0, lt=16)
+    access: int = Field(None, title="Photo permissions (rw)", gt=0, lt=16)
 
 
 @dataclass
@@ -71,7 +71,7 @@ class Tag:
     Main tag class
     """
     tag_id: int
-    image_id: int
+    photo_id: int
     name: str = Field(None, title="Tag text", max_length=64)
 
 
@@ -154,22 +154,22 @@ class Database:
         ]
         if hasattr(photo, "id"):
             data.append(photo.id)
-            query = """UPDATE image SET ihash=$1, description=$2, album_id=$3, moment=$4, path=$5, filename=$6,
+            query = """UPDATE photo SET ihash=$1, description=$2, album_id=$3, moment=$4, path=$5, filename=$6,
                    width=$7, height=$8, size=$9, camera_id=$10, orientation=$11, lat=$12, lng=$13, altitude=$14, 
                    gps_ref=$15, access=$16 WHERE id=$17 RETURNING id"""
         else:
-            query = """INSERT INTO image(ihash, description, album_id, moment, path, filename, width, height, size,
+            query = """INSERT INTO photo(ihash, description, album_id, moment, path, filename, width, height, size,
             camera_id, orientation, lat, lng, altitude, gps_ref, access)
             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id"""
         try:
-            image_id = await conn.fetchrow(query, *data)
+            photo_id = await conn.fetchrow(query, *data)
         finally:
             await self.pool.release(conn)
-        return image_id
+        return photo_id
 
     async def delete_photo(self, photo_id: int):
         conn = await self.pool.acquire()
-        query = "DELETE FROM image WHERE id=$1"
+        query = "DELETE FROM photo WHERE id=$1"
         try:
             await conn.fetchrow(query, photo_id)
         finally:
@@ -177,9 +177,9 @@ class Database:
 
     async def get_geotagged_photos(self):
         conn = await self.pool.acquire()
-        query = """SELECT image.id, ihash, lat, lng, altitude, extract(epoch from moment) as moment,
-                filename, size, make, model, orientation, path, width, height, image.description
-                FROM image LEFT OUTER JOIN camera on image.camera_id = camera.id
+        query = """SELECT photo.id, ihash, lat, lng, altitude, extract(epoch from moment) as moment,
+                filename, size, make, model, orientation, path, width, height, photo.description
+                FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id
                 WHERE lat IS NOT NULL AND lng IS NOT NULL"""
         try:
             photos = await conn.fetch(query)
@@ -189,9 +189,9 @@ class Database:
 
     async def get_photos_nogps(self, start_moment: datetime.datetime, stop_moment:datetime.datetime):
         conn = await self.pool.acquire()
-        query = """SELECT image.id, ihash, extract(epoch from moment) as moment, filename, size,
-                make, model, orientation, path, width, height, image.description
-                FROM image LEFT OUTER JOIN camera on image.camera_id = camera.id
+        query = """SELECT photo.id, ihash, extract(epoch from moment) as moment, filename, size,
+                make, model, orientation, path, width, height, photo.description
+                FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id
                 WHERE (lat IS NULL OR lng IS NULL) AND moment BETWEEN $1 AND $2 ORDER BY moment ASC LIMIT 30"""
         try:
             photos = await conn.fetch(query, start_moment, stop_moment)
@@ -201,12 +201,12 @@ class Database:
 
     async def save_tag(self, tag: Tag) -> int:
         conn = await self.pool.acquire()
-        data = [tag.name, tag.image]
+        data = [tag.name, tag.photo]
         if not hasattr(tag, "id"):
             data.append(tag.id)
-            query = "UPDATE tag SET name=$1, image_id=$2 WHERE id=$3 RETURNING id"
+            query = "UPDATE tag SET name=$1, photo=$2 WHERE id=$3 RETURNING id"
         else:
-            query = "INSERT INTO tag(name, image_id) VALUES($1, $2) RETURNING id"
+            query = "INSERT INTO tag(name, photo_id) VALUES($1, $2) RETURNING id"
         try:
             tag_id = await conn.fetchrow(query, *data)
         finally:
@@ -223,8 +223,8 @@ class Database:
 
     async def get_stats(self):
         conn = await self.pool.acquire()
-        query = """SELECT image.id,extract(epoch from moment) as moment,lat,lng,size,make,model,
-                width, height FROM image LEFT OUTER JOIN camera on image.camera_id = camera.id"""
+        query = """SELECT photo.id,extract(epoch from moment) as moment,lat,lng,size,make,model,
+                width, height FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id"""
         try:
             stats = await conn.fetch(query)
         finally:
@@ -247,9 +247,9 @@ class Database:
                   model text NOT NULL,
                   CONSTRAINT camera_pkey PRIMARY KEY (id)
             )""",
-            """CREATE TABLE IF NOT EXISTS image(
+            """CREATE TABLE IF NOT EXISTS photo(
                     id serial NOT NULL,
-                    ihash text NOT NULL,
+                    ihash text NOT NULL UNIQUE,
                     description text NOT NULL,
                     album_id integer,
                     moment timestamp without time zone NOT NULL,
@@ -265,29 +265,34 @@ class Database:
                     altitude double precision,
                     gps_ref text NOT NULL,
                     access smallint NOT NULL,
-                    CONSTRAINT image_pkey PRIMARY KEY (id),
-                    CONSTRAINT image_album_id_fkey FOREIGN KEY (album_id) REFERENCES album(id),
-                    CONSTRAINT image_camera_id_fkey FOREIGN KEY (camera_id) REFERENCES camera(id)
-                );
-                CREATE INDEX image_album_id ON album_image USING btree(album_id);
-                CREATE INDEX image_camera_id ON album_image USING btree(camera_id);
-                CREATE INDEX image_altitude ON album_image USING btree(altitude);
-                CREATE INDEX image_lat ON album_image USING btree(lat);
-                CREATE INDEX image_lng ON album_image USING btree(lng);
-                CREATE INDEX image_moment ON album_image USING btree(moment);
-                CREATE INDEX image_access ON album_image USING btree(access);
-            """,
-            """CREATE TABLE IF NOT EXISTS image_tag(
+                    CONSTRAINT photo_pkey PRIMARY KEY (id),
+                    CONSTRAINT photo_album_id_fkey FOREIGN KEY (album_id) REFERENCES album(id),
+                    CONSTRAINT photo_camera_id_fkey FOREIGN KEY (camera_id) REFERENCES camera(id)
+            )""",
+            "CREATE INDEX IF NOT EXISTS photo_album_id_idx ON photo USING btree(album_id)",
+            "CREATE INDEX IF NOT EXISTS photo_camera_id_idx ON photo USING btree(camera_id)",
+            "CREATE INDEX IF NOT EXISTS photo_altitude_idx ON photo USING btree(altitude)",
+            "CREATE INDEX IF NOT EXISTS photo_lat_idx ON photo USING btree(lat)",
+            "CREATE INDEX IF NOT EXISTS photo_lng_idx ON photo USING btree(lng)",
+            "CREATE INDEX IF NOT EXISTS photo_moment_idx ON photo USING btree(moment)",
+            "CREATE INDEX IF NOT EXISTS photo_access_idx ON photo USING btree(access)",
+            """CREATE TABLE IF NOT EXISTS photo_tag(
                   id serial NOT NULL,
                   name text NOT NULL,
-                  image_id integer NOT NULL,
+                  photo_id integer NOT NULL,
                   CONSTRAINT tag_pkey PRIMARY KEY (id),
-                  CONSTRAINT tag_image_id_fkey FOREIGN KEY(image_id) REFERENCES image(id)
-                );
-                CREATE INDEX tag_image_id ON album_tag USING btree(image_id);
-                CREATE INDEX tag_name ON album_tag USING btree(name);
-            """
+                  CONSTRAINT tag_photo_id_fkey FOREIGN KEY(photo_id) REFERENCES photo(id)
+            )""",
+            "CREATE INDEX IF NOT EXISTS tag_name_idx ON photo_tag USING btree(name)",
+            "CREATE INDEX IF NOT EXISTS tag_photo_id_idx ON photo_tag USING btree(photo_id)"
         ]
+        conn = await self.pool.acquire()
+        for query in queries:
+            try:
+                await conn.fetch(query)
+            except Exception as exc:
+                logger.error("cannot run query: %s", exc)
+        await self.pool.release(conn)
 
     # @property
     # def gear_level(self) -> int:

@@ -3,10 +3,11 @@ Created on May 24, 2016
 
 @author: iticus
 """
-
+import asyncio
 import datetime
 import hashlib
 import logging
+from functools import partial
 
 import aiohttp_jinja2
 from aiohttp import web
@@ -107,7 +108,7 @@ class Geo(BaseView):
     async def get(self):
         op = self.request.query.get("op")
         if op == "get_photo_list":
-            start_dt = datetime.datetime.strptime(self.request.query.get("start_filter", "2018-12-01"), "%Y-%m-%d")
+            start_dt = datetime.datetime.strptime(self.request.query.get("start_filter", "2020-12-01"), "%Y-%m-%d")
             stop_dt = datetime.datetime.strptime(self.request.query.get("stop_filter", "2021-12-01"), "%Y-%m-%d")
             photos = await self.database.get_photos_nogps(start_dt, stop_dt)
             return web.json_response([dict(photo) for photo in photos])
@@ -126,7 +127,7 @@ class Geo(BaseView):
             except ValueError:
                 return self.finish("lat and/or lng invalid")
 
-            query = """UPDATE image set lat=%s, lng=%s WHERE id=%s and ihash=%s RETURNING id"""
+            query = """UPDATE photo set lat=%s, lng=%s WHERE id=%s and ihash=%s RETURNING id"""
             data = (lat, lng, iid, ihash)
             response = await self.database.raw_query(query, data)
             if response:
@@ -164,23 +165,26 @@ class Upload(BaseView):
             hashes.add(photo["ihash"])
 
         data = await self.request.post()
-        fileinfo = data["image"]
-        filename = fileinfo.filename
+        fileinfo = data["photo"]
+        filename = data["filename"]
+        path = data["path"]
         file_body = fileinfo.file.read()
         sha1 = hashlib.sha1()
         sha1.update(file_body)
         ihash = sha1.hexdigest()
 
-        # if ihash in hashes:
-        #     logger.info("photo %s already imported", ihash)
-        #     return web.json_response({"status": "error", "details": "photo hash already exists"}, status=409)
+        if ihash in hashes:
+            logger.info("photo %s already imported", ihash)
+            return web.json_response({"status": "error", "details": "photo hash already exists"}, status=409)
 
-        image_file = load_image(file_body)
-        exif_data = parse_exif(file_body, image_file)
+        loop = asyncio.get_running_loop()
+        executor = self.request.app.executor
+        image_file = await loop.run_in_executor(executor, partial(load_image, file_body))
+        exif_data = await loop.run_in_executor(executor, partial(parse_exif, file_body, image_file))
         photo = database.Photo(
             photo_id=None, camera=None, ihash=ihash, description="", album=None,
             moment=exif_data["moment"], width=exif_data["width"], height=exif_data["height"],
-            orientation=exif_data["orientation"],filename=filename, size=exif_data["size"], path="",
+            orientation=exif_data["orientation"], filename=filename, size=exif_data["size"], path=path,
             lat=exif_data["lat"], lng=exif_data["lng"], altitude=exif_data["altitude"],
             gps_ref="".join(exif_data["gps_ref"]), access=1
         )
@@ -200,16 +204,10 @@ class Upload(BaseView):
         else:
             photo.camera = None
 
-        # temp fix
-        if ihash in hashes:
-            logger.info("photo %s already imported", ihash)
-            make_thumbnails(image_file, photo, self.config.MEDIA_PATH)
-            return web.json_response({"status": "error", "details": "photo hash already exists"}, status=409)
-
         result = await self.database.save_photo(photo)
         photo_id = int(result["id"])
-        make_thumbnails(image_file, photo, self.config.MEDIA_PATH)
-        await cache.del_value(self.cache, "geotagged_images")
+        await loop.run_in_executor(executor, partial(make_thumbnails, image_file, photo, self.config.MEDIA_PATH))
+        await cache.del_value(self.cache, "geotagged_photos")
         await cache.del_value(self.cache, "stats")
         return web.json_response({"status": "ok", "message": f"photo saved, id {photo_id}"})
 

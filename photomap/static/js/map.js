@@ -1,11 +1,11 @@
-var map = null;
-var markers = [];
-var optionPaneState = 0;
-var bounds = new google.maps.LatLngBounds();
-var infoWindow = new google.maps.InfoWindow();
-var mcOptions = {gridSize: 50, maxZoom: 18, imagePath: '/static/images/m'};
-var markerCluster = null;
-var imagesById = {};
+let map = null;
+let markers = [];
+let optionPaneState = 0;
+let bounds = new google.maps.LatLngBounds();
+let infoWindow = new google.maps.InfoWindow();
+let mcOptions = {gridSize: 50, maxZoom: 18, imagePath: '/static/images/m'};
+let markerCluster = null;
+let photosById = {};
 
 function enableClustering() {
 	if (markerCluster == null)
@@ -15,51 +15,39 @@ function enableClustering() {
 function disableClustering() {
 	markerCluster.clearMarkers();
 	markerCluster = null;
-	for ( var i = 0; i < markers.length; i++) {
+	for ( let i = 0; i < markers.length; i++) {
 		markers[i].setMap(map);
 	}
 }
 
 function initializeMap() {
-	
-	for ( var i=0; i<images.length; i++){
-		imagesById[images[i]['id']] = images[i];
+	for ( let i=0; i<window.photos.length; i++){
+		photosById[photos[i]['id']] = photos[i];
 	}
-	
-	var mapOptions = {
+	let mapOptions = {
 		zoom : 7,
 		scaleControl: true,
 		center : new google.maps.LatLng(45.5, 25),
 		mapTypeId : google.maps.MapTypeId.ROADMAP
 	};
-
 	map = new google.maps.Map(document.getElementById('mapCanvas'), mapOptions);
-	
-	for ( var i = 0; i < images.length; i++) {
-		var image = images[i];
-		var point = new google.maps.LatLng(image['lat'], image['lng']);
-
+	for ( let i = 0; i < window.photos.length; i++) {
+		let photo = photos[i];
+		let point = new google.maps.LatLng(photo['lat'], photo['lng']);
 		bounds.extend(point);
-		
-		var marker = new google.maps.Marker({
+		let marker = new google.maps.Marker({
 			position : point,
-			title : image['filename'],
+			title : photo['filename'],
 			icon : new google.maps.MarkerImage('/media/thumbnails/64px/'+ 
-					image['path'] + '/' + image['hash']),
-			image_id: image['id']
+					photo.ihash[0] + '/' + photo.ihash[1] + '/'+ photo.ihash),
+			image_id: photo['id']
 		});
-		
-		
-		
-		marker.content = generateInfoWindowContent(image);
-		
+		marker.content = generateInfoWindowContent(photo);
 		google.maps.event.addListener(marker, 'click', function () {
             infoWindow.setContent(this.content);
             infoWindow.open(this.getMap(), this);
         });
-		
 		//marker.setMap(map);
-				
 		markers.push(marker);
 	}
 	
@@ -81,4 +69,3 @@ $(document).keyup(function(e){
 });
 
 google.maps.event.addDomListener(window, 'load', initializeMap);
-

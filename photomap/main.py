@@ -7,7 +7,7 @@ Created on Nov 1, 2015
 import asyncio
 import logging
 import os
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 
 import aiohttp_jinja2
 import jinja2
@@ -60,9 +60,10 @@ def make_app():
     app.router.add_view("/upload{tail:.*?}", views.Upload)
     path = os.path.join(os.getcwd(), "static")
     app.router.add_static("/static", path)
+    app.router.add_static("/media", settings.MEDIA_PATH)
     app.router.add_view("/favicon.ico", views.Favicon)
     app.middlewares.append(error_middleware)
-    app.executor = ThreadPoolExecutor(max_workers=2)
+    app.executor = ProcessPoolExecutor(max_workers=12)
     app.config = settings
     app.database = Database(settings.DSN)
     path = os.path.join(os.getcwd(), "templates")

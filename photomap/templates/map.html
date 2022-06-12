@@ -12,14 +12,14 @@
     	<script type="text/javascript" src="/static/js/utils.js"></script>
 	    <script type="text/javascript" src="/static/js/map.js"></script>
 	 <script>
-	    let images = [];
+	    window.photos = [];
  		{% for photo in photos %}
- 			images.push({
+ 			photos.push({
  				"id": {{ photo.id }},
- 				"hash": "{{ photo.ihash }}",
+ 				"ihash": "{{ photo.ihash }}",
  				"lat": {{ photo.lat }},
  				"lng": {{ photo.lng }},
- 				"altitude": {{ photo.altitude }},
+ 				"altitude": {{ photo.altitude or 0.0}},
  				"moment": new Date({{ photo.moment }} * 1000),
  				"filename": "{{ photo.filename }}",
  				"size": {{ photo.size }},

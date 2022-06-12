@@ -29,20 +29,21 @@ def gather_file_list() -> Generator:
 async def upload_worker(q: asyncio.Queue, session: ClientSession):
     headers = {"Authentication": settings.SECRET}  # "Content-Type": content_type
     while True:
-        filename = await q.get()
-        logger.info("uploading photo %s", filename)
+        file_path = await q.get()
+        logger.info("uploading photo %s", file_path)
         try:
-            file_handle = open(filename, "rb")
+            file_handle = open(file_path, "rb")
+            path, filename = os.path.split(file_path)
             request = await session.post(
                 url="http://127.0.0.1:8000/upload/",
-                data={"image": file_handle.read()},
+                data={"photo": file_handle.read(), "filename": filename, "path": path},
                 headers=headers
             )
             data = await request.json()
-            logger.info("uploaded image %s: %s", filename, data)
+            logger.info("uploaded photo %s: %s", filename, data)
             file_handle.close()
         except Exception as exc:
-            logger.warning("cannot upload image %s: %s", filename, exc)
+            logger.warning("cannot upload photo %s: %s", filename, exc)
         q.task_done()
 
 
@@ -50,7 +51,7 @@ async def main():
     session = ClientSession()
     q = asyncio.Queue()
     logger.info("creating workers")
-    workers = [asyncio.create_task(upload_worker(q, session=session)) for _ in range(1)]
+    workers = [asyncio.create_task(upload_worker(q, session=session)) for _ in range(4)]
     logger.info("populating queue")
     for filename in gather_file_list():
         await q.put(filename)
