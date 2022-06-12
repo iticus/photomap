@@ -175,6 +175,14 @@ class Database:
         finally:
             await self.pool.release(conn)
 
+    async def get_all_ihash(self):
+        conn = await self.pool.acquire()
+        try:
+            hashes = await conn.fetch("SELECT photo.ihash FROM photo")
+        finally:
+            await self.pool.release(conn)
+        return hashes
+
     async def get_geotagged_photos(self):
         conn = await self.pool.acquire()
         query = """SELECT photo.id, ihash, lat, lng, altitude, extract(epoch from moment) as moment,

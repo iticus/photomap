@@ -156,14 +156,8 @@ class Upload(BaseView):
             return web.json_response({"status": "error", "details": "invalid secret value"}, status=403)
 
         # TODO: use local cache for photo data
-        geotagged_photos = await self.database.get_geotagged_photos()
-        nogps_photos = await self.database.get_photos_nogps(
-            datetime.datetime(1000, 1, 1), datetime.datetime(3000, 1, 1)
-        )
-        hashes = set()
-        for photo in geotagged_photos + nogps_photos:
-            hashes.add(photo["ihash"])
-
+        all_photo_ihash = await self.database.get_all_ihash()
+        hashes = set([photo["ihash"] for photo in all_photo_ihash])
         data = await self.request.post()
         fileinfo = data["photo"]
         filename = data["filename"]
