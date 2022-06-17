@@ -11,7 +11,7 @@ from typing import Generator
 
 from aiohttp import ClientSession
 
-import settings, utils
+import settings
 
 logger = logging.getLogger(__name__)
 BASE_DIR = "/media/data/poze/"
@@ -30,7 +30,7 @@ async def upload_worker(q: asyncio.Queue, session: ClientSession):
     headers = {"Authentication": settings.SECRET}  # "Content-Type": content_type
     while True:
         file_path = await q.get()
-        logger.info("uploading photo %s", file_path)
+        logger.debug("uploading photo %s", file_path)
         try:
             file_handle = open(file_path, "rb")
             path, filename = os.path.split(file_path)
@@ -40,10 +40,10 @@ async def upload_worker(q: asyncio.Queue, session: ClientSession):
                 headers=headers
             )
             data = await request.json()
-            logger.info("uploaded photo %s: %s", filename, data)
+            logger.debug("uploaded photo %s: %s", filename, data)
             file_handle.close()
         except Exception as exc:
-            logger.warning("cannot upload photo %s: %s", filename, exc)
+            logger.warning("cannot upload photo %s from %s: %s", filename, path, exc)
         q.task_done()
 
 

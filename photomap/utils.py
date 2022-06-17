@@ -17,14 +17,20 @@ def exif2gps(exif_data):
     if not exif_data:
         return None
     if isinstance(exif_data[0], tuple):
+        if exif_data[0][1] == 0:  # avoid division by 0
+            return None
         degree = float(exif_data[0][0] / exif_data[0][1])
     else:
         degree = float(exif_data[0])
     if isinstance(exif_data[1], tuple):
         minute = float(exif_data[1][0] / exif_data[1][1])
+        if exif_data[1][1] == 0:
+            return None
     else:
         minute = float(exif_data[1])
     if isinstance(exif_data[2], tuple):
+        if exif_data[2][1] == 0:
+            return None
         second = float(exif_data[2][0] / exif_data[2][1])
     else:
         second = float(exif_data[2])
