@@ -1,52 +1,44 @@
 {% extends "base.html" %}
-	{% block title %}Main map - photomap{% endblock %}
-	{% block head %}
-        {{ super() }}
-	    <link rel="stylesheet" type="text/css" href="/static/css/base.css" />
-	    <link rel="stylesheet" type="text/css" href="/static/css/map.css" />
-		<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_key }}"></script>
-	    <script type="text/javascript" src="/static/js/jquery.js"></script>
-	    <script type="text/javascript" src="/static/js/jquery-ui.js"></script>
-    	<script type="text/javascript" src="/static/js/jquery.tools.min.js"></script>
-    	<script type="text/javascript" src="/static/js/markerclusterer.js"></script>
-    	<script type="text/javascript" src="/static/js/utils.js"></script>
-	    <script type="text/javascript" src="/static/js/map.js"></script>
-	 <script>
-	    window.photos = [];
- 		{% for photo in photos %}
- 			photos.push({
- 				"id": {{ photo.id }},
- 				"ihash": "{{ photo.ihash }}",
- 				"lat": {{ photo.lat }},
- 				"lng": {{ photo.lng }},
- 				"altitude": {{ photo.altitude or 0.0}},
- 				"moment": new Date({{ photo.moment }} * 1000),
- 				"filename": "{{ photo.filename }}",
- 				"size": {{ photo.size }},
- 				"camera": "{{ photo.make }}" + " " + "{{ photo.model }}",
- 				"orientation": "{{ photo.orientation }}",
- 				"path": "{{ photo.path }}",
- 				"width": "{{ photo.width }}",
- 				"height": "{{ photo.height }}",
- 				"description": "{{ photo.description }}"
- 			});
-        {% endfor %}
-    </script>
-	{% endblock %}
-	
-	{% block body %}
-	<body>	
-	    <div id="mapCanvas"></div>
-	    
-	    <div id="imageOverlay" class="overlay" onclick="closeOverlayContainer()">
-	    	<div id="overlayContainer">
-	    	</div>
-	    </div>
-	    
-	    <div id="optionsPane">
-	    	<span>Marker Clustering (K)</span>
-	   		<input type="radio" name="markerClustering" onclick="enableClustering()" checked />ON<br>
-	   		<input type="radio" name="markerClustering" onclick="disableClustering()" />OFF<br>
-	    </div>
-	</body>
-	{% endblock %}
+{% block title %}Main map - photomap{% endblock %}
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" type="text/css" href="/static/css/map.css" />
+    <script type="text/javascript" src="/static/js/markerclusterer.js"></script>
+    <script type="text/javascript" src="/static/js/utils.js"></script>
+    <script type="text/javascript" src="/static/js/map.js"></script>
+ <script>
+    window.photos = [];
+    {% for photo in photos %}
+        photos.push({
+            "id": {{ photo.id }},
+            "ihash": "{{ photo.ihash }}",
+            "lat": {{ photo.lat }},
+            "lng": {{ photo.lng }},
+            "altitude": {{ photo.altitude or 0.0}},
+            "moment": new Date({{ photo.moment }} * 1000),
+            "filename": "{{ photo.filename }}",
+            "size": {{ photo.size }},
+            "camera": "{{ photo.make }}" + " " + "{{ photo.model }}",
+            "orientation": "{{ photo.orientation }}",
+            "path": "{{ photo.path }}",
+            "width": "{{ photo.width }}",
+            "height": "{{ photo.height }}",
+            "description": "{{ photo.description }}"
+        });
+    {% endfor %}
+</script>
+{% endblock %}
+
+{% block body %}
+    <div id="mapCanvas"></div>
+
+    <div id="imageOverlay" class="overlay" onclick="closeOverlayContainer()">
+    </div>
+
+    <div id="optionsPane">
+        <span>Marker Clustering (K)</span>
+        <input type="radio" name="markerClustering" onclick="enableClustering()" checked />ON<br>
+        <input type="radio" name="markerClustering" onclick="disableClustering()" />OFF<br>
+    </div>
+    <script async src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_key }}&callback=initMap"></script>
+{% endblock %}

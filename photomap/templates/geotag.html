@@ -3,9 +3,6 @@
 {% block head %}
     {{ super() }}
     <link rel="stylesheet" type="text/css" href="/static/css/geotag.css"/>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_key }}"></script>
-    <script type="text/javascript" src="/static/js/jquery.js"></script>
-    <script type="text/javascript" src="/static/js/jquery-ui.js"></script>
     <script type="text/javascript" src="/static/js/utils.js"></script>
     <script type="text/javascript" src="/static/js/geotag.js"></script>
     <script>
@@ -16,10 +13,7 @@
     <div id="mapCanvas"></div>
     <div id="imageList">
     </div>
-    <div id="imageOverlay" class="overlay" onclick="closeOverlayContainer()">
-        <div id="overlayContainer">
-        </div>
-    </div>
+    <div id="imageOverlay" class="overlay" onclick="closeOverlayContainer()"></div>
     <div id="optionsPane">
         <div>Marker Clustering (K)</div>
         <div>
@@ -55,5 +49,6 @@
             <button name="button" onClick="filterPhotos()">Filter</button>
         </div>
     </div>
+    <script async src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_key }}&callback=initMap"></script>
 {% endblock %}
 	

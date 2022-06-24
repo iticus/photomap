@@ -1,9 +1,9 @@
-let map = null;
+let map;
+let bounds;
+let infoWindow;
 let markers = [];
 let optionPaneState = 0;
-let bounds = new google.maps.LatLngBounds();
-let infoWindow = new google.maps.InfoWindow();
-let mcOptions = {gridSize: 50, maxZoom: 18, imagePath: '/static/images/m'};
+let mcOptions = {gridSize: 50, maxZoom: 18, imagePath: "/static/images/m"};
 let markerCluster = null;
 let photosById = {};
 
@@ -20,9 +20,11 @@ function disableClustering() {
 	}
 }
 
-function initializeMap() {
+function initMap() {
+	bounds = new google.maps.LatLngBounds();
+	infoWindow = new google.maps.InfoWindow();
 	for ( let i=0; i<window.photos.length; i++){
-		photosById[photos[i]['id']] = photos[i];
+		photosById[photos[i]["id"]] = photos[i];
 	}
 	let mapOptions = {
 		zoom : 7,
@@ -55,17 +57,14 @@ function initializeMap() {
 	enableClustering();
 }
 
-$(document).keyup(function(e){
-
-    if(e.keyCode === 27) {
+document.onkeydown = function(e) {
+    if (e.code === "27") {
     	closeOverlayContainer();
     }
-
-    if(e.keyCode === 90)
+    if (e.code === "90")
     	map.fitBounds(bounds);
-   
-    if(e.keyCode === 79)
+    if (e.code === "79")
     	toggleOptionsPane();
-});
+};
 
-google.maps.event.addDomListener(window, 'load', initializeMap);
+window.initMap = initMap;

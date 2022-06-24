@@ -1,66 +1,64 @@
-var map = null;
-var optionPaneState = 0;
-var infoWindow = new google.maps.InfoWindow();
-var photosById = {};
+let map = null;
+let optionPaneState = 0;
+let photosById = {};
 
 function filterPhotos(){
+	let url = new URL("/geotag", window.location.origin);
 	let data = {
-		'op': "get_photo_list",
-		'album_filter': $('#album_filter').val(),
-		'start_filter': $('#start_filter').val(),
-		'stop_filter': $('#stop_filter').val()
+		"op": "get_photo_list",
+		"album_filter": document.getElementById("album_filter").innerText,
+		"start_filter": document.getElementById("start_filter").innerText,
+		"stop_filter": document.getElementById("stop_filter").innerText
 	}
-	
-	$.ajax({
-		  url: '/geotag',
-		  type: 'GET',
-		  data: data,
-		  success: function(photos) {
-			    $('#imageList').html('');
-			    photosById = {};
-				for ( let i = 0; i < photos.length; i++) {
-					let photo = photos[i];
-	 				//photo['moment'] = new Date(photo[2] * 1000);
-					photosById[photo.id] = photo;
-					let imgSrc = "/media/thumbnails/64px/" + photo.ihash[0] + "/" + photo.ihash[1] + "/" + photo.ihash;
-					let img =  $('<img class="photo-list-item" draggable="true" onclick="showImage(' +  photo.id + ')" src=' + imgSrc +
-							' id="' + photo.id + '" data-hash="' + photo.ihash + '">');
-					$('#imageList').append(img);
-				}
-				$('.image-list-item').draggable({helper: 'clone',
-					appendTo: 'body',
-					stop: function(e, ui) {
-						var point=new google.maps.Point(e.pageX, e.pageY);
-						var latLng=overlay.getProjection().fromContainerPixelToLatLng(point);
-						var marker = new google.maps.Marker({
-							position: latLng, 
-							map: map,
-							icon: this.src
-						});
-						//alert($(this).attr('data-hash'));
-						lat = marker.getPosition().lat();
-						lng = marker.getPosition().lng();
-						post_data = {'id': $(this).attr('id'), 'hash': $(this).attr('data-hash'), 'lat': lat, 'lng': lng};
-						$.ajax({
-							  url: '/geotag/update_location',
-							  type: 'POST',
-							  data: post_data,
-							  success: function(data) {
-								  //alert("Success: " + data);
-								  },
-						      fail: function() { 
-						    	  alert("Error: " + data); 
-						    	  }
-							  });
-						
-						$(this).remove();
-					}
-				});
-		  }
-		});
+	url.search = new URLSearchParams(data).toString();
+	fetch(url, {method: "GET"})
+	.then(response => response.json())
+	.then(photos => {
+		let imageList = document.getElementById("imageList");
+		imageList.innerHTML = "";
+		photosById = {};
+		let content = "";
+		for ( let i = 0; i < photos.length; i++) {
+			let photo = photos[i];
+			photosById[photo.id] = photo;
+			let imgSrc = "/media/thumbnails/64px/" + photo.ihash[0] + "/" + photo.ihash[1] + "/" + photo.ihash;
+			content += '<img class="photo-list-item" draggable="true" onclick="showImage(' +  photo.id + ')" src=' + imgSrc +
+					' id="' + photo.id + '" data-hash="' + photo.ihash + '">';
+		}
+		imageList.innerHTML = content;
+		// document.getElementsByClassName(".image-list-item").draggable({helper: 'clone',
+		// 	appendTo: 'body',
+		// 	stop: function(e, ui) {
+		// 		let point=new google.maps.Point(e.pageX, e.pageY);
+		// 		let latLng=overlay.getProjection().fromContainerPixelToLatLng(point);
+		// 		let marker = new google.maps.Marker({
+		// 			position: latLng,
+		// 			map: map,
+		// 			icon: this.src
+		// 		});
+		// 		//alert($(this).attr('data-hash'));
+		// 		let lat = marker.getPosition().lat();
+		// 		let lng = marker.getPosition().lng();
+		// 		let post_data = {'id': $(this).attr('id'), 'hash': $(this).attr('data-hash'), 'lat': lat, 'lng': lng};
+		// 		$.ajax({
+		// 			  url: '/geotag/update_location',
+		// 			  type: 'POST',
+		// 			  data: post_data,
+		// 			  success: function(data) {
+		// 				  console.log("Geotag success: " + data);
+		// 				  },
+		// 			  fail: function() {
+		// 				  alert("Error: " + data);
+		// 				  }
+		// 			  });
+		//
+		// 		$(this).remove();
+		// 	}
+		// });
+	});
 }
 
-function initializeMap() {
+function initMap() {
 	
 	for ( let i=0; i<window.photos.length; i++){
 		photosById[photos[i]['id']] = photos[i];
@@ -74,26 +72,24 @@ function initializeMap() {
 	};
 
 	map = new google.maps.Map(document.getElementById('mapCanvas'), mapOptions);
-	overlay = new google.maps.OverlayView();
+	let overlay = new google.maps.OverlayView();
 	overlay.draw = function() {};
 	overlay.setMap(map); 
 	
-	$('#start_filter').val('2020-01-01');
-	$('#stop_filter').val('2021-01-01');
+	document.getElementById("start_filter").innerHTML = "2020-01-01";
+	document.getElementById("stop_filter").innerHTML = "2021-01-01";
 	
 	filterPhotos();
 }
 
-$(document).keyup(function(e){
-
+document.onkeydown = function(e) {
 	if (e.shiftKey == true) {
-	    if(e.keyCode === 27) {
+	    if (e.code === "27") {
 	    	closeOverlayContainer();
 	    }
-	
-	    if(e.keyCode === 79)
+	    if (e.code === "79")
 	    	toggleOptionsPane();
 	}
-});
+};
 
-google.maps.event.addDomListener(window, 'load', initializeMap);
+window.initMap = initMap;

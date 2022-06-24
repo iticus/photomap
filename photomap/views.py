@@ -3,6 +3,7 @@ Created on May 24, 2016
 
 @author: iticus
 """
+
 import asyncio
 import datetime
 import hashlib
@@ -115,31 +116,26 @@ class Geo(BaseView):
         context = {"google_maps_key": self.config.GOOGLE_MAPS_KEY}
         return aiohttp_jinja2.render_template("geotag.html", self.request, context=context)
 
-    async def post(self, op):
+    async def post(self):
+        op = self.request.query.get("op")
         if op == "update_location":
-            ihash = self.get_argument("hash", "unknown")
-            iid = self.get_argument("id", 0)
-            lat = self.get_argument("lat")
-            lng = self.get_argument("lng")
+            ihash = self.self.request.query.get("hash", "unknown")
+            photo_id = self.self.request.query.get("id", 0)
+            lat = self.self.request.query.get("lat")
+            lng = self.self.request.query.get("lng")
             try:
                 lat = float(lat)
                 lng = float(lng)
             except ValueError:
-                return self.finish("lat and/or lng invalid")
-
-            query = """UPDATE photo set lat=%s, lng=%s WHERE id=%s and ihash=%s RETURNING id"""
-            data = (lat, lng, iid, ihash)
-            response = await self.database.raw_query(query, data)
+                return web.json_response({"status": "error", "details": "lat and/or lng invalid"}, status=400)
+            response = await self.database.update_photo_location(photo_id, ihash, lat, lng)
             if response:
-                cache.del_value(self.cache, "geotagged_photos")
-                cache.del_value(self.cache, "stats")
-                self.finish("photo location updated successfully")
+                await cache.del_value(self.cache, "geotagged_photos")
+                await cache.del_value(self.cache, "stats")
+                return web.json_response({"status": "ok", "details": "photo location updated successfully"})
             else:
-                self.set_status(400, "photo location not updated")
-                self.finish()
-
-        else:
-            self.finish("unknown op")
+                return web.json_response({"status": "error", "details": "photo location not updated"}, status=400)
+        return web.json_response({"status": "error", "details": "unknown operation"}, status=400)
 
 
 class Upload(BaseView):
@@ -168,7 +164,7 @@ class Upload(BaseView):
         ihash = sha1.hexdigest()
 
         if ihash in hashes:
-            logger.info("photo %s already imported", ihash)
+            logger.debug("photo %s, %s already imported", ihash, filename)
             return web.json_response({"status": "error", "details": "photo hash already exists"}, status=409)
 
         loop = asyncio.get_running_loop()

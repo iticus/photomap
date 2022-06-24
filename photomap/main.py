@@ -38,8 +38,7 @@ async def shutdown(app):
     logger.info("disconnecting from database")
     await app.database.disconnect()
     logger.info("disconnecting from redis")
-    app.redis.close()
-    await app.redis.wait_closed()
+    await app.redis.close()
     try:  # python < 3.9 compatibility
         asyncio.all_tasks
     except AttributeError:

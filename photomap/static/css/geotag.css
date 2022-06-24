@@ -37,23 +37,18 @@ table.info-table tr td:last-child {
 table.info-table tr:nth-child(even) {
 	background-color: #E8E8E8;
 }
+
 div.overlay {
     /* initially overlay is hidden */
     display: none;
     cursor: pointer;
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    top: 0;
+    margin: 0 auto;
     font-size: 11px;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
     background-color: rgba(0, 0, 0, 0.5);
-}
-
-div#overlayContainer {
-    /* initially overlay is hidden */
-    width: 0;
-    margin: auto;
     box-shadow: 2px 2px 20px 3px #000;
 }
 

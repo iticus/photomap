@@ -75,7 +75,6 @@ class Tag:
     name: str = Field(None, title="Tag text", max_length=64)
 
 
-
 class Database:
     """
     Database related functions for PG-based SQL data store
@@ -91,6 +90,13 @@ class Database:
         """
         self.pool = await asyncpg.create_pool(dsn=self.dsn, min_size=4, max_size=16)
         logger.info("successfully connected to database")
+
+    async def disconnect(self):
+        """
+        Disconnect from PG and close pool
+        """
+        await self.pool.close()
+        logger.info("successfully disconnected from database")
 
     async def save_album(self, album: Album) -> int:
         conn = await self.pool.acquire()
@@ -163,6 +169,15 @@ class Database:
             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id"""
         try:
             photo_id = await conn.fetchrow(query, *data)
+        finally:
+            await self.pool.release(conn)
+        return photo_id
+
+    async def update_photo_location(self, photo_id: int, ihash: str, lat: float, lng: float) -> int:
+        conn = await self.pool.acquire()
+        query = "UPDATE photo set lat=$1, lng=$2 WHERE id=$3 and ihash=$4 RETURNING id"
+        try:
+            photo_id = await conn.fetchrow(query, lat, lng, photo_id, ihash)
         finally:
             await self.pool.release(conn)
         return photo_id
