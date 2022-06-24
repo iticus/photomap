@@ -10,7 +10,7 @@
     </script>
 {% endblock %}
 {% block body %}
-    <div id="mapCanvas"></div>
+    <div id="mapCanvas" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
     <div id="imageList">
     </div>
     <div id="imageOverlay" class="overlay" onclick="closeOverlayContainer()"></div>

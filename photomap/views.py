@@ -119,13 +119,12 @@ class Geo(BaseView):
     async def post(self):
         op = self.request.query.get("op")
         if op == "update_location":
-            ihash = self.self.request.query.get("hash", "unknown")
-            photo_id = self.self.request.query.get("id", 0)
-            lat = self.self.request.query.get("lat")
-            lng = self.self.request.query.get("lng")
+            data = await self.request.json()
+            ihash = data.get("hash", "unknown")
             try:
-                lat = float(lat)
-                lng = float(lng)
+                photo_id = int(data.get("id", ""))
+                lat = float(data.get("lat", ""))
+                lng = float(data.get("lng", ""))
             except ValueError:
                 return web.json_response({"status": "error", "details": "lat and/or lng invalid"}, status=400)
             response = await self.database.update_photo_location(photo_id, ihash, lat, lng)
