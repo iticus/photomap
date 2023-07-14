@@ -39,9 +39,9 @@ function closeOptionsPane() {
 function toggleOptionsPane() {
 	if (optionPaneState == 1)
 		closeOptionsPane();
-	else 
+	else
 		openOptionsPane();
-	optionPaneState = 1 - optionPaneState;	
+	optionPaneState = 1 - optionPaneState;
 }
 
 function generateInfoWindowContent(photo) {

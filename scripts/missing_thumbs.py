@@ -5,13 +5,11 @@ Created on Sep 11, 2012
 
 import hashlib
 import os
+
 import tornado
 from PIL import Image as PilImage
-from photomap.utils import make_thumbnail
+from src.photomap import MEDIA_PATH, database, make_thumbnail
 from tornado.gen import coroutine
-
-from photomap import database
-from photomap.settings import MEDIA_PATH
 
 
 @coroutine
@@ -27,8 +25,12 @@ def main():
         thumb2 = os.path.join(base_dir, "thumbnails/192px", path, ihash)
         thumb3 = os.path.join(base_dir, "thumbnails/960px", path, ihash)
         original = os.path.join(base_dir, "original/", path, ihash)
-        if (not os.path.isfile(thumb1) or not os.path.isfile(thumb2) or not os.path.isfile(thumb3) or
-                not os.path.isfile(original)):
+        if (
+            not os.path.isfile(thumb1)
+            or not os.path.isfile(thumb2)
+            or not os.path.isfile(thumb3)
+            or not os.path.isfile(original)
+        ):
             print("missing file: %s" % ihash)
             for root, dirs, files in os.walk("/media/ionut/Poze"):
                 for file in files:

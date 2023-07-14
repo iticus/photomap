@@ -29,7 +29,7 @@ table.info-table td, table.info-table th {
 table.info-table tr td:first-child {
 	text-align: right;
 }
-	
+
 table.info-table tr td:last-child {
 	text-align: left;
 }
@@ -71,9 +71,9 @@ div#optionsPane {
 	cursor: pointer;
 	display: inline;
 	max-height: 42px;
-	margin-left: 12px; 
+	margin-left: 12px;
 	margin-top: 3px;
-	z-index: 16; 
+	z-index: 16;
 }
 
 #form input, textarea, select, button {

@@ -11,14 +11,14 @@ from concurrent.futures import ProcessPoolExecutor
 
 import aiohttp_jinja2
 import jinja2
-from aiohttp import web
-from aiohttp_session import setup
-from aiohttp_session.redis_storage import RedisStorage, aioredis
-
 import settings
 import views
+from aiohttp import web
+from aiohttp_session import setup
+from aiohttp_session.redis_storage import RedisStorage
 from database import Database
 from middlewares import error_middleware
+from redis import asyncio as aioredis
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ async def shutdown(app):
 
 
 def make_app():
-    app = web.Application(client_max_size=64*1000*1000)
+    app = web.Application(client_max_size=64 * 1000 * 1000)
     app.router.add_view("/", views.Home)
     app.router.add_view("/map{tail:.*?}", views.Map)
     app.router.add_view("/login{tail:.*?}", views.Login)
@@ -64,11 +64,15 @@ def make_app():
     app.middlewares.append(error_middleware)
     app.executor = ProcessPoolExecutor(max_workers=12)
     app.config = settings
-    app.database = Database(settings.DSN)
-    path = os.path.join(os.getcwd(), "templates")
-    aiohttp_jinja2.setup(
-        app, loader=jinja2.FileSystemLoader(path)
+    app.database = Database(
+        settings.POSTGRES_USER,
+        settings.POSTGRES_PASSWORD,
+        settings.POSTGRES_HOST,
+        settings.POSTGRES_PORT,
+        settings.POSTGRES_DB,
     )
+    path = os.path.join(os.getcwd(), "templates")
+    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(path))
     app.on_startup.append(startup)
     app.on_shutdown.append(shutdown)
     return app

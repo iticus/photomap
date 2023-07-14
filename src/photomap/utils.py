@@ -5,6 +5,7 @@ Created on Sep 11, 2012
 """
 
 import os
+
 from PIL import Image as PilImage
 
 
@@ -51,7 +52,7 @@ def make_thumbnail(image, outfile, width, height):
         temp.thumbnail(size, PilImage.ANTIALIAS)
         temp.save(outfile, "JPEG")
     except IOError as exc:
-        print('cannot create thumbnail for %s: %s' % (image.filename, exc))
+        print("cannot create thumbnail for %s: %s" % (image.filename, exc))
 
 
 def generate_path(base_path: str, ihash: str) -> str:
@@ -63,16 +64,15 @@ def main():
     """
     Test make thumbnail
     """
-    images = ['/home/ionut/img_test/test1.jpg', '/home/ionut/img_test/test2.jpg',
-              '/home/ionut/img_test/test3.jpg']
+    images = ["/home/ionut/img_test/test1.jpg", "/home/ionut/img_test/test2.jpg", "/home/ionut/img_test/test3.jpg"]
     resolutions = [(960, 960), (192, 192), (64, 64)]
 
     for image in images:
         im1 = PilImage.open(image)
         for resolution in resolutions:
-            outfile = image.replace('.jpg', '_') + str(resolution[0]) + '.jpg'
+            outfile = image.replace(".jpg", "_") + str(resolution[0]) + ".jpg"
             make_thumbnail(im1, outfile, resolution[0], resolution[1])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

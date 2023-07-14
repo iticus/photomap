@@ -18,7 +18,7 @@ table.info-table td, table.info-table th {
 table.info-table tr td:first-child {
 	text-align: right;
 }
-	
+
 table.info-table tr td:last-child {
 	text-align: left;
 }

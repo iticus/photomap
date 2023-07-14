@@ -10,10 +10,9 @@ from io import BytesIO
 from typing import Union
 
 import piexif
-from PIL import Image as PilImage
-
 import utils
 from database import Photo
+from PIL import Image as PilImage
 
 
 def parse_exif(file_body: bytes, image_file: PilImage) -> dict[str, Union[str, float, int, datetime.datetime]]:
@@ -63,9 +62,17 @@ def parse_exif(file_body: bytes, image_file: PilImage) -> dict[str, Union[str, f
         moment = b"1970:01:01 00:00:00"  # fix bad timestamp in EXIF data
     moment = datetime.datetime.strptime(moment.decode(), "%Y:%m:%d %H:%M:%S")
     return {
-        "moment": moment, "camera_make": camera_make, "camera_model": camera_model, "lat": lat, "lng": lng,
-        "orientation": orientation, "width": width, "height": height, "altitude": altitude, "gps_ref": gps_ref,
-        "size": len(file_body)
+        "moment": moment,
+        "camera_make": camera_make,
+        "camera_model": camera_model,
+        "lat": lat,
+        "lng": lng,
+        "orientation": orientation,
+        "width": width,
+        "height": height,
+        "altitude": altitude,
+        "gps_ref": gps_ref,
+        "size": len(file_body),
     }
 
 

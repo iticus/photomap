@@ -40,7 +40,7 @@ function initMap() {
 		let marker = new google.maps.Marker({
 			position : point,
 			title : photo['filename'],
-			icon : new google.maps.MarkerImage('/media/thumbnails/64px/'+ 
+			icon : new google.maps.MarkerImage('/media/thumbnails/64px/'+
 					photo.ihash[0] + '/' + photo.ihash[1] + '/'+ photo.ihash),
 			image_id: photo['id']
 		});
@@ -52,7 +52,7 @@ function initMap() {
 		//marker.setMap(map);
 		markers.push(marker);
 	}
-	
+
 	map.fitBounds(bounds);
 	enableClustering();
 }

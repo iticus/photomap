@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "photomap"
+
+[tool.pytest.ini_options]
+pythonpath = "src/photomap"
+addopts = [
+    "--import-mode=importlib",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.isort]
+src_paths = ["src/photomap", "tests"]
+known_first_party = "photomap"
+line_length = 120
+multi_line_output = 3
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+#plugins = [
+#  "pydantic.mypy"
+#]
+ignore_missing_imports = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+show_error_codes = true
+namespace_packages = true
+# Invoke (tasks.py) does not support type hints: https://github.com/pyinvoke/invoke/issues/357
+exclude = []

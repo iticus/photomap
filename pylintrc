@@ -1,0 +1,5 @@
+[FORMAT]
+max-line-length=120
+good-names=i,j,k,n,r,x,y,z,x1,y1,x2,y2,db
+[MESSAGES CONTROL]
+disable=E0401,fixme

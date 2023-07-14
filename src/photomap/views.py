@@ -11,14 +11,12 @@ import logging
 from functools import partial
 
 import aiohttp_jinja2
-from aiohttp import web
-
-from aiohttp.web_fileresponse import FileResponse
-from aiohttp_session import get_session, new_session
-
 import cache
 import database
-from photo import parse_exif, load_image, make_thumbnails
+from aiohttp import web
+from aiohttp.web_fileresponse import FileResponse
+from aiohttp_session import get_session, new_session
+from photo import load_image, make_thumbnails, parse_exif
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +39,7 @@ class BaseView(web.View):
                 return web.HTTPFound(f"/login?next={next_url}")
             result = await func(self, *args, **kwargs)
             return result
+
         return wrapped
 
 
@@ -54,7 +53,6 @@ class Home(BaseView):
 
 
 class Login(BaseView):
-
     async def get(self):
         message = self.request.query.get("message")
         next_url = self.request.query.get("next", "/")
@@ -77,7 +75,6 @@ class Login(BaseView):
 
 
 class Logout(BaseView):
-
     @BaseView.authenticated
     async def post(self):
         session = await get_session(self.request)
@@ -171,11 +168,23 @@ class Upload(BaseView):
         image_file = await loop.run_in_executor(executor, partial(load_image, file_body))
         exif_data = await loop.run_in_executor(executor, partial(parse_exif, file_body, image_file))
         photo = database.Photo(
-            photo_id=None, camera=None, ihash=ihash, description="", album=None,
-            moment=exif_data["moment"], width=exif_data["width"], height=exif_data["height"],
-            orientation=exif_data["orientation"], filename=filename, size=exif_data["size"], path=path,
-            lat=exif_data["lat"], lng=exif_data["lng"], altitude=exif_data["altitude"],
-            gps_ref="".join(exif_data["gps_ref"]), access=1
+            photo_id=None,
+            camera=None,
+            ihash=ihash,
+            description="",
+            album=None,
+            moment=exif_data["moment"],
+            width=exif_data["width"],
+            height=exif_data["height"],
+            orientation=exif_data["orientation"],
+            filename=filename,
+            size=exif_data["size"],
+            path=path,
+            lat=exif_data["lat"],
+            lng=exif_data["lng"],
+            altitude=exif_data["altitude"],
+            gps_ref="".join(exif_data["gps_ref"]),
+            access=1,
         )
 
         cameras = await self.database.get_cameras()
@@ -219,7 +228,6 @@ class Stats(BaseView):
 
 
 class About(BaseView):
-
     @BaseView.authenticated
     async def get(self):
         context = {"session": self.session}
@@ -227,6 +235,5 @@ class About(BaseView):
 
 
 class Favicon(BaseView):
-
     async def get(self):
         return FileResponse("static/favicon.png")

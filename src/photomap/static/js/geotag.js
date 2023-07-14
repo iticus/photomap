@@ -68,11 +68,11 @@ function filterPhotos(){
 }
 
 function initMap() {
-	
+
 	for ( let i=0; i<window.photos.length; i++){
 		photosById[photos[i]['id']] = photos[i];
 	}
-	
+
 	let mapOptions = {
 		zoom : 7,
 		scaleControl: true,
@@ -83,11 +83,11 @@ function initMap() {
 	map = new google.maps.Map(document.getElementById('mapCanvas'), mapOptions);
 	overlay = new google.maps.OverlayView();
 	overlay.draw = function() {};
-	overlay.setMap(map); 
-	
+	overlay.setMap(map);
+
 	document.getElementById("start_filter").innerHTML = "2020-01-01";
 	document.getElementById("stop_filter").innerHTML = "2021-01-01";
-	
+
 	filterPhotos();
 }
 

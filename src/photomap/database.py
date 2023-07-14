@@ -5,13 +5,13 @@ Created on Nov 1, 2015
 """
 
 import datetime
+import json
 import logging
 from typing import Optional
 
+import asyncpg
 from pydantic import Field
 from pydantic.dataclasses import dataclass
-
-import asyncpg
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ class Album:
     """
     Main album class
     """
+
     album_id: Optional[int]
     start_moment: datetime.datetime = Field(None, title="Album earliest date")
     stop_moment: datetime.datetime = Field(None, title="Album latest date")
@@ -33,6 +34,7 @@ class Camera:
     """
     Main camera class
     """
+
     camera_id: Optional[int]
     make: str = Field(None, title="Camera make", max_length=256)
     model: str = Field(None, title="Camera model", max_length=256)
@@ -43,6 +45,7 @@ class Photo:
     """
     Main photo class
     """
+
     photo_id: Optional[int]
     album: Optional[int]
     camera: Optional[int]
@@ -61,7 +64,7 @@ class Photo:
     lat: float = Field(None, title="Latitude (deg)", ge=-90, le=90)
     lng: float = Field(None, title="Longitude (deg)", ge=-180, le=180)
     altitude: float = Field(None, title="Altitude (m)", ge=0, le=12000)
-    gps_ref: str = Field(None, title="GPS reference (NE0)",  min_length=3, max_length=3)
+    gps_ref: str = Field(None, title="GPS reference (NE0)", min_length=3, max_length=3)
     access: int = Field(None, title="Photo permissions (rw)", gt=0, lt=16)
 
 
@@ -70,6 +73,7 @@ class Tag:
     """
     Main tag class
     """
+
     tag_id: int
     photo_id: int
     name: str = Field(None, title="Tag text", max_length=64)
@@ -80,18 +84,28 @@ class Database:
     Database related functions for PG-based SQL data store
     """
 
-    def __init__(self, dsn):
-        self.dsn = dsn
+    def __init__(self, username: str, password: str, host: str, port: int, db_name: str) -> None:
+        self.username = username
+        self.password = password
+        self.host = host
+        self.port = port
+        self.db_name = db_name
+        self.dsn = f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.db_name}"
         self.pool = None
 
-    async def connect(self):
+    async def connect(self) -> None:
         """
         Initialize asyncpg Pool and connect to the database
         """
-        self.pool = await asyncpg.create_pool(dsn=self.dsn, min_size=4, max_size=16)
-        logger.info("successfully connected to database")
 
-    async def disconnect(self):
+        async def init_connection(conn):
+            await conn.set_type_codec("jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
+            # await conn.set_type_codec("geometry", encoder=encode_geometry,decoder=decode_geometry, format="binary")
+
+        self.pool = await asyncpg.create_pool(dsn=self.dsn, min_size=2, max_size=8, init=init_connection)
+        logger.info("successfully connected to database %s on %s", self.db_name, self.host)
+
+    async def disconnect(self) -> None:
         """
         Disconnect from PG and close pool
         """
@@ -154,14 +168,27 @@ class Database:
     async def save_photo(self, photo: Photo) -> int:
         conn = await self.pool.acquire()
         data = [
-            photo.ihash, photo.description, photo.album, photo.moment, photo.path, photo.filename,
-            photo.width, photo.height, photo.size, photo.camera, photo.orientation,
-            photo.lat, photo.lng, photo.altitude, photo.gps_ref, photo.access
+            photo.ihash,
+            photo.description,
+            photo.album,
+            photo.moment,
+            photo.path,
+            photo.filename,
+            photo.width,
+            photo.height,
+            photo.size,
+            photo.camera,
+            photo.orientation,
+            photo.lat,
+            photo.lng,
+            photo.altitude,
+            photo.gps_ref,
+            photo.access,
         ]
         if hasattr(photo, "id"):
             data.append(photo.id)
             query = """UPDATE photo SET ihash=$1, description=$2, album_id=$3, moment=$4, path=$5, filename=$6,
-                   width=$7, height=$8, size=$9, camera_id=$10, orientation=$11, lat=$12, lng=$13, altitude=$14, 
+                   width=$7, height=$8, size=$9, camera_id=$10, orientation=$11, lat=$12, lng=$13, altitude=$14,
                    gps_ref=$15, access=$16 WHERE id=$17 RETURNING id"""
         else:
             query = """INSERT INTO photo(ihash, description, album_id, moment, path, filename, width, height, size,
@@ -210,7 +237,7 @@ class Database:
             await self.pool.release(conn)
         return photos
 
-    async def get_photos_nogps(self, start_moment: datetime.datetime, stop_moment:datetime.datetime):
+    async def get_photos_nogps(self, start_moment: datetime.datetime, stop_moment: datetime.datetime):
         conn = await self.pool.acquire()
         query = """SELECT photo.id, ihash, extract(epoch from moment) as moment, filename, size,
                 make, model, orientation, path, width, height, photo.description
@@ -307,7 +334,7 @@ class Database:
                   CONSTRAINT tag_photo_id_fkey FOREIGN KEY(photo_id) REFERENCES photo(id)
             )""",
             "CREATE INDEX IF NOT EXISTS tag_name_idx ON photo_tag USING btree(name)",
-            "CREATE INDEX IF NOT EXISTS tag_photo_id_idx ON photo_tag USING btree(photo_id)"
+            "CREATE INDEX IF NOT EXISTS tag_photo_id_idx ON photo_tag USING btree(photo_id)",
         ]
         conn = await self.pool.acquire()
         for query in queries:

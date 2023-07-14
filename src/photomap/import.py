@@ -9,16 +9,15 @@ import logging
 import os
 from typing import Generator
 
-from aiohttp import ClientSession
-
 import settings
+from aiohttp import ClientSession
 
 logger = logging.getLogger(__name__)
 BASE_DIR = "/media/data/poze/"
 
 
 def gather_file_list() -> Generator:
-    for (dirpath, _, filenames) in os.walk(BASE_DIR):
+    for dirpath, _, filenames in os.walk(BASE_DIR):
         for filename in filenames:
             if not filename.lower().endswith(".jpg") and not filename.lower().endswith(".jpeg"):
                 # logging.info("skipping %s from %s" % (filename, dirpath))
@@ -37,7 +36,7 @@ async def upload_worker(q: asyncio.Queue, session: ClientSession):
             request = await session.post(
                 url="http://127.0.0.1:8000/upload/",
                 data={"photo": file_handle.read(), "filename": filename, "path": path},
-                headers=headers
+                headers=headers,
             )
             data = await request.json()
             logger.debug("uploaded photo %s: %s", filename, data)

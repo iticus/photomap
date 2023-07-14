@@ -5,13 +5,11 @@ Created on Sep 19, 2012
 """
 
 import os
+
 import piexif
 import tornado
+from src.photomap import MEDIA_PATH, database, exif2gps
 from tornado.gen import coroutine
-
-from photomap import database
-from photomap.settings import MEDIA_PATH
-from photomap.utils import exif2gps
 
 
 @coroutine
