@@ -9,7 +9,7 @@ import os
 from PIL import Image as PilImage
 
 
-def exif2gps(exif_data):
+def exif2gps(exif_data: list | None) -> float | None:
     """
     Transform coordinate from DMS into D.D
     :param exif_data: image exif data:
@@ -38,7 +38,7 @@ def exif2gps(exif_data):
     return degree + minute / 60.0 + second / 3600.0
 
 
-def make_thumbnail(image, outfile, width, height):
+def make_thumbnail(image: PilImage, outfile: str, width: int, height: int) -> None:
     """
     Create new thumbnail from image
     :param image: input image to create thumbnail from
@@ -52,21 +52,26 @@ def make_thumbnail(image, outfile, width, height):
         temp.thumbnail(size, PilImage.ANTIALIAS)
         temp.save(outfile, "JPEG")
     except IOError as exc:
-        print("cannot create thumbnail for %s: %s" % (image.filename, exc))
+        print(f"cannot create thumbnail for {image.filename}: {exc}")
 
 
 def generate_path(base_path: str, ihash: str) -> str:
+    """
+    Generate full path from base and photo i-hash
+    :param base_path: base folder for the photo
+    :param ihash: unique photo identifier
+    :return:
+    """
     path = os.path.join(base_path, ihash[0], ihash[1])
     return path
 
 
-def main():
+def main() -> None:
     """
     Test make thumbnail
     """
     images = ["/home/ionut/img_test/test1.jpg", "/home/ionut/img_test/test2.jpg", "/home/ionut/img_test/test3.jpg"]
     resolutions = [(960, 960), (192, 192), (64, 64)]
-
     for image in images:
         im1 = PilImage.open(image)
         for resolution in resolutions:

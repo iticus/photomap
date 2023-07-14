@@ -3,6 +3,7 @@ aiohttp-jinja2
 redis
 aiohttp-session
 argon2-cffi
+asyncpg
 piexif
 pillow
 pydantic

@@ -41,7 +41,7 @@ class Camera:
 
 
 @dataclass
-class Photo:
+class Photo:  # pylint: disable=too-many-instance-attributes
     """
     Main photo class
     """
@@ -84,21 +84,23 @@ class Database:
     Database related functions for PG-based SQL data store
     """
 
-    def __init__(self, username: str, password: str, host: str, port: int, db_name: str) -> None:
+    def __init__(  # pylint: disable=too-many-arguments
+        self, username: str, password: str, host: str, port: int, db_name: str
+    ) -> None:
         self.username = username
         self.password = password
         self.host = host
         self.port = port
         self.db_name = db_name
         self.dsn = f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.db_name}"
-        self.pool = None
+        # self.pool
 
     async def connect(self) -> None:
         """
         Initialize asyncpg Pool and connect to the database
         """
 
-        async def init_connection(conn):
+        async def init_connection(conn: asyncpg.Connection) -> None:
             await conn.set_type_codec("jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
             # await conn.set_type_codec("geometry", encoder=encode_geometry,decoder=decode_geometry, format="binary")
 
@@ -113,10 +115,15 @@ class Database:
         logger.info("successfully disconnected from database")
 
     async def save_album(self, album: Album) -> int:
+        """
+        Upsert album data to database
+        :param album: album object to add or update
+        :return: album ID
+        """
         conn = await self.pool.acquire()
         data = [album.name, album.description, album.start_moment, album.stop_moment]
         if hasattr(album, "id"):
-            data.append(self.id)
+            data.append(album.id)
             query = "UPDATE album SET name=$1, description=$2, start_moment=$3, stop_moment=$4 WHERE id=$5 RETURNING id"
         else:
             query = "INSERT INTO album(name,description,start_moment,stop_moment) VALUES($1, $2, $3, $4) RETURNING id"
@@ -126,7 +133,11 @@ class Database:
             await self.pool.release(conn)
         return album_id
 
-    async def delete_album(self, album_id: int):
+    async def delete_album(self, album_id: int) -> None:
+        """
+        Delete album object from database
+        :param album_id: album ID to delete
+        """
         conn = await self.pool.acquire()
         query = "DELETE FROM album WHERE id=$1"
         try:
@@ -135,6 +146,11 @@ class Database:
             await self.pool.release(conn)
 
     async def save_camera(self, camera: Camera) -> int:
+        """
+        Upsert camera data to database
+        :param camera: camera object to add or update
+        :return: camera ID
+        """
         conn = await self.pool.acquire()
         data = [camera.make, camera.model]
         if hasattr(camera, "id"):
@@ -148,7 +164,11 @@ class Database:
             await self.pool.release(conn)
         return camera_id
 
-    async def get_cameras(self):
+    async def get_cameras(self) -> list[Camera]:
+        """
+        Retrieve all cameras from database
+        :return: list of cameras
+        """
         conn = await self.pool.acquire()
         query = "SELECT id, make, model FROM camera"
         try:
@@ -157,7 +177,11 @@ class Database:
             await self.pool.release(conn)
         return cameras
 
-    async def delete_camera(self, camera_id: int):
+    async def delete_camera(self, camera_id: int) -> None:
+        """
+        Delete camera object from database
+        :param camera_id: camera ID to delete
+        """
         conn = await self.pool.acquire()
         query = "DELETE FROM camera WHERE id=$1"
         try:
@@ -166,6 +190,11 @@ class Database:
             await self.pool.release(conn)
 
     async def save_photo(self, photo: Photo) -> int:
+        """
+        Upsert photo data to database
+        :param photo: photo object to add or update
+        :return: photo ID
+        """
         conn = await self.pool.acquire()
         data = [
             photo.ihash,
@@ -201,6 +230,14 @@ class Database:
         return photo_id
 
     async def update_photo_location(self, photo_id: int, ihash: str, lat: float, lng: float) -> int:
+        """
+        Update location data for existing photo
+        :param photo_id: object ID to update the location for
+        :param ihash: photo hash to double-check
+        :param lat: latitude to save
+        :param lng: longitude to save
+        :return: photo ID
+        """
         conn = await self.pool.acquire()
         query = "UPDATE photo set lat=$1, lng=$2 WHERE id=$3 and ihash=$4 RETURNING id"
         try:
@@ -209,7 +246,11 @@ class Database:
             await self.pool.release(conn)
         return photo_id
 
-    async def delete_photo(self, photo_id: int):
+    async def delete_photo(self, photo_id: int) -> None:
+        """
+        Delete photo from database
+        :param photo_id: ID of the photo to remove
+        """
         conn = await self.pool.acquire()
         query = "DELETE FROM photo WHERE id=$1"
         try:
@@ -217,7 +258,11 @@ class Database:
         finally:
             await self.pool.release(conn)
 
-    async def get_all_ihash(self):
+    async def get_all_ihash(self) -> list[str]:
+        """
+        Retrieve all existing i-hashes from the database
+        :return: list of i-hashes
+        """
         conn = await self.pool.acquire()
         try:
             hashes = await conn.fetch("SELECT photo.ihash FROM photo")
@@ -225,7 +270,11 @@ class Database:
             await self.pool.release(conn)
         return hashes
 
-    async def get_geotagged_photos(self):
+    async def get_geotagged_photos(self) -> list[Photo]:
+        """
+        Retrieve all existing photos from the database that have location information
+        :return: list of photos
+        """
         conn = await self.pool.acquire()
         query = """SELECT photo.id, ihash, lat, lng, altitude, extract(epoch from moment) as moment,
                 filename, size, make, model, orientation, path, width, height, photo.description
@@ -237,7 +286,11 @@ class Database:
             await self.pool.release(conn)
         return photos
 
-    async def get_photos_nogps(self, start_moment: datetime.datetime, stop_moment: datetime.datetime):
+    async def get_photos_nogps(self, start_moment: datetime.datetime, stop_moment: datetime.datetime) -> list[Photo]:
+        """
+        Retrieve first 30 photos from the database without location information
+        :return: list of photos
+        """
         conn = await self.pool.acquire()
         query = """SELECT photo.id, ihash, extract(epoch from moment) as moment, filename, size,
                 make, model, orientation, path, width, height, photo.description
@@ -250,8 +303,13 @@ class Database:
         return photos
 
     async def save_tag(self, tag: Tag) -> int:
+        """
+        Upsert tag to database
+        :param tag: tag object to add or update
+        :return: tag ID
+        """
         conn = await self.pool.acquire()
-        data = [tag.name, tag.photo]
+        data = [tag.name, tag.photo_id]
         if not hasattr(tag, "id"):
             data.append(tag.id)
             query = "UPDATE tag SET name=$1, photo=$2 WHERE id=$3 RETURNING id"
@@ -263,7 +321,11 @@ class Database:
             await self.pool.release(conn)
         return tag_id
 
-    async def delete_tag(self, tag_id: int):
+    async def delete_tag(self, tag_id: int) -> None:
+        """
+        Delete tag from database
+        :param tag_id: ID of the tag to remove
+        """
         conn = await self.pool.acquire()
         query = "DELETE FROM tag WHERE id=$1"
         try:
@@ -271,7 +333,11 @@ class Database:
         finally:
             await self.pool.release(conn)
 
-    async def get_stats(self):
+    async def get_stats(self) -> list:
+        """
+        Retrieve photo and camera stats from database
+        :return: stats
+        """
         conn = await self.pool.acquire()
         query = """SELECT photo.id,extract(epoch from moment) as moment,lat,lng,size,make,model,
                 width, height FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id"""
@@ -281,7 +347,10 @@ class Database:
             await self.pool.release(conn)
         return stats
 
-    async def create_structure(self):
+    async def create_structure(self) -> None:
+        """
+        Ensure table and index structure exists
+        """
         queries = [
             """CREATE TABLE IF NOT EXISTS album(
                   id serial NOT NULL,
@@ -340,7 +409,7 @@ class Database:
         for query in queries:
             try:
                 await conn.fetch(query)
-            except Exception as exc:
+            except asyncpg.PostgresError as exc:
                 logger.error("cannot run query: %s", exc)
         await self.pool.release(conn)
 

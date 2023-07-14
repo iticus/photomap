@@ -9,13 +9,16 @@ import datetime
 import hashlib
 import logging
 from functools import partial
+from typing import Any, Callable
 
 import aiohttp_jinja2
-import cache
-import database
 from aiohttp import web
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_session import get_session, new_session
+
+import cache
+import database
+import security
 from photo import load_image, make_thumbnails, parse_exif
 
 logger = logging.getLogger(__name__)
@@ -24,15 +27,21 @@ logger = logging.getLogger(__name__)
 class BaseView(web.View):
     """Base View to be inherited / implemented by subsequent views"""
 
-    def __init__(self, request):
+    def __init__(self, request: web.Request) -> None:
         super().__init__(request)
         self.config = self.request.app.config
         self.database = self.request.app.database
         self.cache = self.request.app.redis
 
     @staticmethod
-    def authenticated(func):
-        async def wrapped(self, *args, **kwargs):
+    def authenticated(func: Callable) -> Callable:
+        """
+        Decorator for checking authentication for requests
+        :param func: function to decorate
+        :return: decorator
+        """
+
+        async def wrapped(self: web.Request, *args: Any, **kwargs: Any) -> Any:
             self.session = await get_session(self.request)
             if "email" not in self.session:
                 next_url = self.request.rel_url or "/"
@@ -42,24 +51,32 @@ class BaseView(web.View):
 
         return wrapped
 
+    async def get(self) -> web.Response:
+        """Implement GET request in this function"""
+
+    async def post(self) -> web.Response:
+        """Implement POST request in this function"""
+
 
 class Home(BaseView):
     """
     Main view for /
     """
 
-    async def get(self):
+    async def get(self) -> web.Response:
         return aiohttp_jinja2.render_template("home.html", self.request, context={})
 
 
 class Login(BaseView):
-    async def get(self):
+    """Handle login page and POST request"""
+
+    async def get(self) -> web.Response:
         message = self.request.query.get("message")
         next_url = self.request.query.get("next", "/")
         context = {"message": message, "next_url": next_url}
         return aiohttp_jinja2.render_template("login.html", self.request, context=context)
 
-    async def post(self):
+    async def post(self) -> web.Response:
         data = await self.request.post()
         if not data.get("email") or not data.get("password"):
             return web.HTTPFound(location="/login?message=provide email and password")
@@ -75,8 +92,10 @@ class Login(BaseView):
 
 
 class Logout(BaseView):
+    """Logout user"""
+
     @BaseView.authenticated
-    async def post(self):
+    async def post(self) -> web.Response:
         session = await get_session(self.request)
         session.invalidate()
         return web.HTTPFound(location="/")
@@ -87,7 +106,7 @@ class Map(BaseView):
     Main view for /map (main map)
     """
 
-    async def get(self):
+    async def get(self) -> web.Response:
         photos = await cache.get_value(self.cache, "geotagged_photos")
         if not photos:
             photos = await self.database.get_geotagged_photos()
@@ -103,7 +122,7 @@ class Geo(BaseView):
     View for manually geotagging photos (/geotag)
     """
 
-    async def get(self):
+    async def get(self) -> web.Response:
         op = self.request.query.get("op")
         if op == "get_photo_list":
             start_dt = datetime.datetime.strptime(self.request.query.get("start_filter", "2020-12-01"), "%Y-%m-%d")
@@ -113,7 +132,7 @@ class Geo(BaseView):
         context = {"google_maps_key": self.config.GOOGLE_MAPS_KEY}
         return aiohttp_jinja2.render_template("geotag.html", self.request, context=context)
 
-    async def post(self):
+    async def post(self) -> web.Response:
         op = self.request.query.get("op")
         if op == "update_location":
             data = await self.request.json()
@@ -129,8 +148,7 @@ class Geo(BaseView):
                 await cache.del_value(self.cache, "geotagged_photos")
                 await cache.del_value(self.cache, "stats")
                 return web.json_response({"status": "ok", "details": "photo location updated successfully"})
-            else:
-                return web.json_response({"status": "error", "details": "photo location not updated"}, status=400)
+            return web.json_response({"status": "error", "details": "photo location not updated"}, status=400)
         return web.json_response({"status": "error", "details": "unknown operation"}, status=400)
 
 
@@ -139,17 +157,17 @@ class Upload(BaseView):
     Handler for uploading pictures (manually or via import script)
     """
 
-    async def get(self):
+    async def get(self) -> web.Response:
         return aiohttp_jinja2.render_template("upload.html", self.request, context={})
 
-    async def post(self):
+    async def post(self) -> web.Response:
         secret = self.request.headers.get("Authentication", "")
         if secret != self.config.SECRET:
             return web.json_response({"status": "error", "details": "invalid secret value"}, status=403)
 
         # TODO: use local cache for photo data
         all_photo_ihash = await self.database.get_all_ihash()
-        hashes = set([photo["ihash"] for photo in all_photo_ihash])
+        hashes = {[photo["ihash"] for photo in all_photo_ihash]}
         data = await self.request.post()
         fileinfo = data["photo"]
         filename = data["filename"]
@@ -215,7 +233,7 @@ class Stats(BaseView):
     Handler for rendering photo stats
     """
 
-    async def get(self):
+    async def get(self) -> web.Response:
         op = self.request.query.get("op")
         if op == "get_stats":
             stats = await cache.get_value(self.cache, "stats")
@@ -228,12 +246,16 @@ class Stats(BaseView):
 
 
 class About(BaseView):
+    """Render about page"""
+
     @BaseView.authenticated
-    async def get(self):
+    async def get(self) -> web.Response:
         context = {"session": self.session}
         return aiohttp_jinja2.render_template("about.html", self.request, context=context)
 
 
 class Favicon(BaseView):
-    async def get(self):
+    """Render static favicon file"""
+
+    async def get(self) -> web.Response:
         return FileResponse("static/favicon.png")

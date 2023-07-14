@@ -9,14 +9,18 @@ import logging
 import os
 from typing import Generator
 
-import settings
 from aiohttp import ClientSession
+
+import settings
 
 logger = logging.getLogger(__name__)
 BASE_DIR = "/media/data/poze/"
 
 
 def gather_file_list() -> Generator:
+    """
+    Generate list of image files from source folder
+    """
     for dirpath, _, filenames in os.walk(BASE_DIR):
         for filename in filenames:
             if not filename.lower().endswith(".jpg") and not filename.lower().endswith(".jpeg"):
@@ -25,10 +29,15 @@ def gather_file_list() -> Generator:
             yield os.path.join(dirpath, filename)
 
 
-async def upload_worker(q: asyncio.Queue, session: ClientSession):
+async def upload_worker(path_queue: asyncio.Queue, session: ClientSession) -> None:
+    """
+    Pull file paths from the queue and upload them using the API
+    :param path_queue: queue to pull file paths from
+    :param session: client session to use for uploading
+    """
     headers = {"Authentication": settings.SECRET}  # "Content-Type": content_type
     while True:
-        file_path = await q.get()
+        file_path = await path_queue.get()
         logger.debug("uploading photo %s", file_path)
         try:
             file_handle = open(file_path, "rb")
@@ -41,21 +50,24 @@ async def upload_worker(q: asyncio.Queue, session: ClientSession):
             data = await request.json()
             logger.debug("uploaded photo %s: %s", filename, data)
             file_handle.close()
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=broad-exception-caught
             logger.warning("cannot upload photo %s from %s: %s", filename, path, exc)
-        q.task_done()
+        path_queue.task_done()
 
 
-async def main():
+async def main() -> None:
+    """
+    Main function to import photos using async parallel workers
+    """
     session = ClientSession()
-    q = asyncio.Queue()
+    path_queue: asyncio.Queue = asyncio.Queue()
     logger.info("creating workers")
-    workers = [asyncio.create_task(upload_worker(q, session=session)) for _ in range(4)]
+    workers = [asyncio.create_task(upload_worker(path_queue, session=session)) for _ in range(4)]
     logger.info("populating queue")
     for filename in gather_file_list():
-        await q.put(filename)
+        await path_queue.put(filename)
     logger.info("queue populated")
-    await q.join()  # wait for all tasks to be processed
+    await path_queue.join()  # wait for all tasks to be processed
     await asyncio.sleep(2.0)
     logger.info("cancelling workers")
     for worker in workers:

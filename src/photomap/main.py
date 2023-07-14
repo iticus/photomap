@@ -11,19 +11,24 @@ from concurrent.futures import ProcessPoolExecutor
 
 import aiohttp_jinja2
 import jinja2
-import settings
-import views
 from aiohttp import web
 from aiohttp_session import setup
 from aiohttp_session.redis_storage import RedisStorage
+from redis import asyncio as aioredis
+
+import settings
+import views
 from database import Database
 from middlewares import error_middleware
-from redis import asyncio as aioredis
 
 logger = logging.getLogger(__name__)
 
 
-async def startup(app):
+async def startup(app: web.Application) -> None:
+    """
+    Establish database and cache connections
+    :param app: application instance
+    """
     logger.info("connecting to database")
     await app.database.connect()
     await app.database.create_structure()
@@ -34,21 +39,25 @@ async def startup(app):
     setup(app, storage)
 
 
-async def shutdown(app):
+async def shutdown(app: web.Application) -> None:
+    """
+    Gracefully disconnect from database and cache servers
+    :param app: application instance
+    """
     logger.info("disconnecting from database")
     await app.database.disconnect()
     logger.info("disconnecting from redis")
     await app.redis.close()
-    try:  # python < 3.9 compatibility
-        asyncio.all_tasks
-    except AttributeError:
-        asyncio.all_tasks = asyncio.Task.all_tasks
     for task in asyncio.all_tasks():
         task.cancel()
     await asyncio.sleep(0.1)
 
 
-def make_app():
+def make_app() -> web.Application:
+    """
+    Main function to create the web application object
+    :return: web application
+    """
     app = web.Application(client_max_size=64 * 1000 * 1000)
     app.router.add_view("/", views.Home)
     app.router.add_view("/map{tail:.*?}", views.Map)
@@ -78,7 +87,7 @@ def make_app():
     return app
 
 
-def main():
+def main() -> None:
     """Start aiohttp server application instance"""
     application = make_app()
     logger.info("starting photomap on %s:%s ...", application.config.ADDRESS, application.config.PORT)

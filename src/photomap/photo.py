@@ -10,12 +10,19 @@ from io import BytesIO
 from typing import Union
 
 import piexif
+from PIL import Image as PilImage
+
 import utils
 from database import Photo
-from PIL import Image as PilImage
 
 
 def parse_exif(file_body: bytes, image_file: PilImage) -> dict[str, Union[str, float, int, datetime.datetime]]:
+    """
+    Parse EXIF data from image bytes
+    :param file_body: raw image data
+    :param image_file: Pil image object
+    :return: exif data
+    """
     exif_data = piexif.load(file_body)
     width = exif_data.get("Exif", {}).get(piexif.ExifIFD.PixelXDimension, None) or image_file.width
     height = exif_data.get("Exif", {}).get(piexif.ExifIFD.PixelYDimension, None) or image_file.height
@@ -76,10 +83,16 @@ def parse_exif(file_body: bytes, image_file: PilImage) -> dict[str, Union[str, f
     }
 
 
-def make_thumbnails(image_file: PilImage, photo: Photo, base_path: str, overwrite: bool = False):
+def make_thumbnails(image_file: PilImage, photo: Photo, base_path: str, overwrite: bool = False) -> None:
+    """
+    Create thumbnails for provided image
+    :param image_file: Pil Image object
+    :param photo: database photo object
+    :param base_path: base path to store the thumbnails in
+    :param overwrite: flag to create a new thumbnail even if one already exists
+    """
     if not os.path.exists(base_path):
         os.makedirs(base_path)
-
     resolutions = [(64, 64), (192, 192), (960, 960)]
     for resolution in resolutions:
         directory = os.path.join(base_path, "thumbnails", f"{resolution[0]}px")
@@ -92,5 +105,10 @@ def make_thumbnails(image_file: PilImage, photo: Photo, base_path: str, overwrit
 
 
 def load_image(file_body: bytes) -> PilImage:
+    """
+    Load the raw image data into a PIL image object
+    :param file_body: raw image data
+    :return: PIL image
+    """
     image_file = PilImage.open(BytesIO(file_body))
     return image_file
