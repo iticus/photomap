@@ -292,7 +292,7 @@ class Database:
         :return: list of photos
         """
         conn = await self.pool.acquire()
-        query = """SELECT photo.id, ihash, extract(epoch from moment) as moment, filename, size,
+        query = """SELECT photo.id, ihash, extract(epoch from moment)::bigint as moment, filename, size,
                 make, model, orientation, path, width, height, photo.description
                 FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id
                 WHERE (lat IS NULL OR lng IS NULL) AND moment BETWEEN $1 AND $2 ORDER BY moment ASC LIMIT 30"""
@@ -339,7 +339,7 @@ class Database:
         :return: stats
         """
         conn = await self.pool.acquire()
-        query = """SELECT photo.id,extract(epoch from moment) as moment,lat,lng,size,make,model,
+        query = """SELECT photo.id,extract(epoch from moment)::bigint as moment,lat,lng,size,make,model,
                 width, height FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id"""
         try:
             stats = await conn.fetch(query)

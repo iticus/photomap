@@ -48,8 +48,6 @@ async def shutdown(app: web.Application) -> None:
     await app.database.disconnect()
     logger.info("disconnecting from redis")
     await app.redis.close()
-    for task in asyncio.all_tasks():
-        task.cancel()
     await asyncio.sleep(0.1)
 
 
@@ -66,7 +64,7 @@ def make_app() -> web.Application:
     app.router.add_view("/geotag{tail:.*?}", views.Geo)
     app.router.add_view("/stats{tail:.*?}", views.Stats)
     app.router.add_view("/upload{tail:.*?}", views.Upload)
-    path = os.path.join(os.getcwd(), "static")
+    path = os.path.join(os.path.dirname(__file__), "static")
     app.router.add_static("/static", path)
     app.router.add_static("/media", settings.MEDIA_PATH)
     app.router.add_view("/favicon.ico", views.Favicon)
@@ -80,7 +78,7 @@ def make_app() -> web.Application:
         settings.POSTGRES_PORT,
         settings.POSTGRES_DB,
     )
-    path = os.path.join(os.getcwd(), "templates")
+    path = os.path.join(os.path.dirname(__file__), "templates")
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(path))
     app.on_startup.append(startup)
     app.on_shutdown.append(shutdown)

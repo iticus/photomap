@@ -25,10 +25,11 @@ POSTGRES_DB = os.getenv("POSTGRES_DB", "photomap")
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = 6379
 
-TEMPLATE_PATH = "templates"
-STATIC_PATH = "static"
-MEDIA_PATH = "/media/data/work/photomap/media"
+# media settings
+MEDIA_PATH = os.getenv("MEDIA_PATH", "/media/data/work/photomap/media")
 
+# Google API settings
 GOOGLE_MAPS_KEY = os.getenv("GOOGLE_MAPS_KEY", "")
 
+# Secret
 SECRET = os.getenv("SECRET", "")
