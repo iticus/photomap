@@ -21,40 +21,55 @@ function disableClustering() {
 }
 
 function initMap() {
-	bounds = new google.maps.LatLngBounds();
-	infoWindow = new google.maps.InfoWindow();
-	for ( let i=0; i<window.photos.length; i++){
-		photosById[photos[i]["id"]] = photos[i];
-	}
-	let mapOptions = {
-		zoom : 7,
-		scaleControl: true,
-		center : new google.maps.LatLng(45.5, 25),
-		mapTypeId : google.maps.MapTypeId.ROADMAP
+
+	// const esri_WorldStreetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+	// 	attribution: 'ESRI Streets'
+	// });
+
+	const esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+		attribution: 'ESRI Satellite'
+	});
+
+	const map = L.map("mapCanvas", {
+		layers: [esri_WorldImagery]
+	}).setView([45.5, 25], 7);
+
+	let baseMaps = {
+		// "ESRI World": esri_WorldStreetMap,
+		"ESRI Satellite": esri_WorldImagery
 	};
-	map = new google.maps.Map(document.getElementById('mapCanvas'), mapOptions);
-	for ( let i = 0; i < window.photos.length; i++) {
+	const popup = L.popup();
+	function onMapClick(e) {
+		popup.setLatLng(e.latlng).setContent(`You clicked the map at ${e.latlng.toString()}`).openOn(map);
+	}
+
+	map.on('click', onMapClick);
+	markerCluster = L.markerClusterGroup({disableClusteringAtZoom: 17});
+	bounds = L.latLngBounds();
+	for ( let i=0; i<window.photos.length; i++){
 		let photo = photos[i];
-		let point = new google.maps.LatLng(photo['lat'], photo['lng']);
+		photosById[photo["id"]] = photo;
+		let point = L.latLng(photo['lat'], photo['lng']);
+		let iconUrl= '/media/thumbnails/64px/' + photo.ihash[0] + '/' + photo.ihash[1] + '/' + photo.ihash;
 		bounds.extend(point);
-		let marker = new google.maps.Marker({
-			position : point,
-			title : photo['filename'],
-			icon : new google.maps.MarkerImage('/media/thumbnails/64px/'+
-					photo.ihash[0] + '/' + photo.ihash[1] + '/'+ photo.ihash),
+		let marker = L.marker(point, {
+			title: photo['filename'],
+			icon: L.icon({iconUrl: iconUrl}),
 			image_id: photo['id']
 		});
-		marker.content = generateInfoWindowContent(photo);
-		google.maps.event.addListener(marker, 'click', function () {
-            infoWindow.setContent(this.content);
-            infoWindow.open(this.getMap(), this);
-        });
-		//marker.setMap(map);
+		let content = generateInfoWindowContent(photo);
+		marker.bindPopup(content, {maxWidth : 540});
 		markers.push(marker);
+		markerCluster.addLayer(marker);
 	}
 
 	map.fitBounds(bounds);
-	enableClustering();
+	// enableClustering();
+	map.addLayer(markerCluster);
+	let overlayMaps = {
+		"Photos": markerCluster
+	};
+	let layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
 }
 
 document.onkeydown = function(e) {
@@ -67,4 +82,6 @@ document.onkeydown = function(e) {
     	toggleOptionsPane();
 };
 
-window.initMap = initMap;
+window.addEventListener("load", (event) => {
+	initMap();
+});

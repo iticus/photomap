@@ -12,7 +12,7 @@ async def test_homepage(photomap_app: web.Application) -> None:
     assert request.status == 200
     response = await request.text()
     assert "<title>Photomap</title>" in response
-    assert 'bootstrap.min.js' in response
+    assert 'bootstrap.bundle.min.js' in response
 
 
 async def test_map(photomap_app: web.Application) -> None:
@@ -22,10 +22,10 @@ async def test_map(photomap_app: web.Application) -> None:
     response = await request.text()
     assert "<title>Main map - photomap</title>" in response
     assert 'photos.push({' in response
-    assert '<div id="mapCanvas"></div>' in response
-    assert '<div id="imageOverlay" class="overlay" onclick="closeOverlayContainer()">' in response
-    assert '<input type="radio" name="markerClustering" onclick="enableClustering()" checked />ON<br>' in response
-    assert "https://maps.googleapis.com/maps/api/js?key=" in response
+    assert '<div id="mapCanvas" class="d-flex"></div>' in response
+    assert '<script type="text/javascript" src="/static/js/leaflet.markercluster.js"></script>' in response
+    assert "leaflet.js" in response
+    assert "bootstrap.bundle.min.js" in response
 
 
 async def test_geotag(photomap_app: web.Application) -> None:

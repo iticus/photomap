@@ -3,7 +3,11 @@
 {% block head %}
     {{ super() }}
     <link rel="stylesheet" type="text/css" href="/static/css/map.css" />
-    <script type="text/javascript" src="/static/js/markerclusterer.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/MarkerCluster.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script type="text/javascript" src="/static/js/leaflet.markercluster.js"></script>
     <script type="text/javascript" src="/static/js/utils.js"></script>
     <script type="text/javascript" src="/static/js/map.js"></script>
  <script>
@@ -28,17 +32,26 @@
     {% endfor %}
 </script>
 {% endblock %}
-
 {% block body %}
-    <div id="mapCanvas"></div>
-
-    <div id="imageOverlay" class="overlay" onclick="closeOverlayContainer()">
+    <div class="modal fade" id="photoModal" tabindex="-1" role="dialog" aria-labelledby="photoModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="photoModalTitle">Image</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="photoModalBody">
+              <div id="spinner" class="d-flex justify-content-center">
+                  <div class="spinner-border" role="status">
+                    <span class="sr-only"></span>
+                  </div>
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <div id="optionsPane">
-        <span>Marker Clustering (K)</span>
-        <input type="radio" name="markerClustering" onclick="enableClustering()" checked />ON<br>
-        <input type="radio" name="markerClustering" onclick="disableClustering()" />OFF<br>
-    </div>
-    <script async src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_key }}&callback=initMap"></script>
+    <div id="mapCanvas" class="d-flex"></div>
 {% endblock %}

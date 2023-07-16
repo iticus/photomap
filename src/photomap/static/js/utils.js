@@ -24,8 +24,9 @@ function showImage(image_id) {
 	let photo = photosById[image_id];
 	let img = '<img id="dynamicImage" style="max-width: 100%; max-height: 100%" src="/media/thumbnails/960px/'+
 			photo.ihash[0] + '/' + photo.ihash[1] + '/' + photo.ihash + '">';
-	document.getElementById("imageOverlay").innerHTML = img;
-	document.getElementById("imageOverlay").style.display = "block";
+	document.getElementById("photoModalBody").innerHTML = img;
+	const myModal = new bootstrap.Modal(document.getElementById("photoModal"), {});
+	myModal.show();
 }
 
 function openOptionsPane() {
