@@ -1,5 +1,4 @@
 let map = null;
-let overlay;
 let optionPaneState = 0;
 let photosById = {};
 
@@ -12,29 +11,21 @@ function drag(ev) {
 	ev.dataTransfer.setData("hash", ev.target.dataset.hash);
 }
 
-function drop(ev) {
-	ev.preventDefault();
+function handleDrop(ev) {
 	let photoId = ev.dataTransfer.getData("id");
 	let hashId =  ev.dataTransfer.getData("hash");
-	let point = new google.maps.Point(ev.pageX, ev.pageY);
-	let latLng = overlay.getProjection().fromContainerPixelToLatLng(point);
-	let marker = new google.maps.Marker({
-		position: latLng,
-		map: map,
-		icon: document.getElementById(photoId).src
-	});
-	//alert($(this).attr('data-hash'));
-	let lat = marker.getPosition().lat();
-	let lng = marker.getPosition().lng();
+	let coordinates = map.containerPointToLatLng(L.point([ev.clientX, ev.clientY]));
+	let marker = L.marker(coordinates, {icon: L.icon({iconUrl: document.getElementById(photoId).src}), draggable: true});
+	marker.addTo(map);
 	let url = new URL("/geotag", window.location.origin);
 	url.search = new URLSearchParams({"op": "update_location"}).toString();
-	let postData = {'id': photoId, 'hash': hashId, 'lat': lat, 'lng': lng};
+	let postData = {"id": photoId, "hash": hashId, "lat": coordinates.lat, "lng": coordinates.lng};
 	let headers = {"Content-Type": "application/json"};
 	fetch(url, {method: 'POST', headers: headers, body: JSON.stringify(postData)})
 	.then(response => response.json())
 	.then(data => {
 		if (data.status === "ok")
-		    console.log("Geotag success: " + data);
+		    document.getElementById(photoId).remove();
 		else
 		    alert("Error: " + JSON.stringify(data));
 	});
@@ -52,8 +43,8 @@ function filterPhotos(){
 	fetch(url, {method: "GET"})
 	.then(response => response.json())
 	.then(photos => {
-		let imageList = document.getElementById("imageList");
-		imageList.innerHTML = "";
+		let photoList = document.getElementById("photoList");
+		photoList.innerHTML = "";
 		photosById = {};
 		let content = "";
 		for ( let i = 0; i < photos.length; i++) {
@@ -63,27 +54,28 @@ function filterPhotos(){
 			content += '<img class="photo-list-item" draggable="true" ondragstart="drag(event)" onclick="showImage(' +  photo.id + ')" src=' + imgSrc +
 					' id="' + photo.id + '" data-hash="' + photo.ihash + '">';
 		}
-		imageList.innerHTML = content;
+		photoList.innerHTML = content;
 	});
 }
 
 function initMap() {
 
-	for ( let i=0; i<window.photos.length; i++){
-		photosById[photos[i]['id']] = photos[i];
-	}
+	const esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+		attribution: 'ESRI Satellite'
+	});
 
-	let mapOptions = {
-		zoom : 7,
-		scaleControl: true,
-		center : new google.maps.LatLng(45.5, 25),
-		mapTypeId : google.maps.MapTypeId.ROADMAP
+	map = L.map("map", {
+		layers: [esri_WorldImagery]
+	}).setView([45.75, 21.25], 12);
+
+	let baseMaps = {
+		// "ESRI World": esri_WorldStreetMap,
+		"ESRI Satellite": esri_WorldImagery
 	};
-
-	map = new google.maps.Map(document.getElementById('mapCanvas'), mapOptions);
-	overlay = new google.maps.OverlayView();
-	overlay.draw = function() {};
-	overlay.setMap(map);
+	const popup = L.popup();
+	function onMapClick(e) {
+		popup.setLatLng(e.latlng).setContent(`You clicked the map at ${e.latlng.toString()}`).openOn(map);
+	}
 
 	document.getElementById("start_filter").innerHTML = "2020-01-01";
 	document.getElementById("stop_filter").innerHTML = "2021-01-01";
@@ -101,4 +93,18 @@ document.onkeydown = function(e) {
 	}
 };
 
-window.initMap = initMap;
+window.addEventListener("load", (event) => {
+	let mapdiv = document.getElementById("map")
+
+	mapdiv.ondragover = function (e) {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = "move";
+	}
+
+	mapdiv.ondrop = function (e) {
+		e.preventDefault();
+		handleDrop(e);
+	}
+
+	initMap();
+});

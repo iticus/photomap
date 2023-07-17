@@ -1,73 +1,22 @@
-html, body, div#mapCanvas {
+html, body   {
      margin: 0;
      padding: 0;
      height: 100%;
 }
 
-div#imageList {
-    position: absolute;
+div#photoList {
+    position: fixed;
     left: 80px;
     right: 80px;
     bottom: 20px;
     height: 48px;
     font-size: 12px;
     background-color: rgba(0, 0, 0, 0.2);
+    z-index: 500;
 	overflow: hidden;
 }
 
-table.info-table {
-	border-collapse: collapse;
-	text-align: center;
-	font-size: 13px;
-}
-
-table.info-table td, table.info-table th {
-	border-right: 1px solid #CCC;
-	padding: 3px;
-}
-
-table.info-table tr td:first-child {
-	text-align: right;
-}
-
-table.info-table tr td:last-child {
-	text-align: left;
-}
-
-table.info-table tr:nth-child(even) {
-	background-color: #E8E8E8;
-}
-
-div.overlay {
-    /* initially overlay is hidden */
-    display: none;
-    cursor: pointer;
-    position: absolute;
-    margin: 0 auto;
-    font-size: 11px;
-    top:50%;
-    left:50%;
-    transform:translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.5);
-    box-shadow: 2px 2px 20px 3px #000;
-}
-
-div#optionsPane {
-    /* initially overlay is hidden */
-    display: none;
-    box-shadow: 2px 2px 20px 3px #000;
-    width: 640px;
-    height: 480px;
-    margin: auto;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    top: 0;
-    font-size: 12px;
-    background-color: rgba(255, 255, 255, 0.92);
-}
-.image-list-item {
+.photo-list-item {
 	cursor: pointer;
 	display: inline;
 	max-height: 42px;

@@ -34,8 +34,9 @@ async def startup(app: web.Application) -> None:
     await app.database.create_structure()
     logger.info("connecting to REDIS instance")
     redis_address = f"redis://{app.config.REDIS_HOST}:{app.config.REDIS_PORT}"
-    app.redis = await aioredis.from_url(redis_address)
-    storage = RedisStorage(app.redis, max_age=86400)
+    app.cache = await aioredis.from_url(redis_address)
+    await app.cache.ping()
+    storage = RedisStorage(app.cache, max_age=86400)
     setup(app, storage)
 
 
@@ -47,7 +48,7 @@ async def shutdown(app: web.Application) -> None:
     logger.info("disconnecting from database")
     await app.database.disconnect()
     logger.info("disconnecting from redis")
-    await app.redis.close()
+    await app.cache.close()
     await asyncio.sleep(0.1)
 
 

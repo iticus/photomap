@@ -33,11 +33,11 @@ async def test_geotag(photomap_app: web.Application) -> None:
     request = await photomap_app.get("/geotag")
     assert request.status == 200
     response = await request.text()
-    assert "<title>geotag images - photomap</title>" in response
-    assert '<div id="mapCanvas" ondrop="drop(event)" ondragover="allowDrop(event)"></div>' in response
-    assert '<div id="imageList">' in response
-    assert '<button name="button" onClick="filterPhotos()">Filter</button>' in response
-    assert "https://maps.googleapis.com/maps/api/js?key=" in response
+    assert "<title>geotag photos - photomap</title>" in response
+    assert "leaflet.js" in response
+    assert '<div id="map" class="d-flex"></div>' in response
+    assert '<div id="photoList">' in response
+    assert '<button name="button" class="btn btn-success" onClick="filterPhotos()">Filter</button>' in response
 
 
 async def test_geotag_ajax(photomap_app: web.Application) -> None:

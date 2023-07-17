@@ -31,7 +31,7 @@ class BaseView(web.View):
         super().__init__(request)
         self.config = self.request.app.config
         self.database = self.request.app.database
-        self.cache = self.request.app.redis
+        self.cache = self.request.app.cache
 
     @staticmethod
     def authenticated(func: Callable) -> Callable:
