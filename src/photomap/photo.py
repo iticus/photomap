@@ -7,7 +7,6 @@ Created on 2022-06-04
 import datetime
 import os
 from io import BytesIO
-from typing import Union
 
 import piexif
 from PIL import Image as PilImage
@@ -16,7 +15,7 @@ import utils
 from database import Photo
 
 
-def parse_exif(file_body: bytes, image_file: PilImage) -> dict[str, Union[str, float, int, datetime.datetime]]:
+def parse_exif(file_body: bytes, image_file: PilImage) -> dict[str, str | float | int | datetime.datetime]:
     """
     Parse EXIF data from image bytes
     :param file_body: raw image data

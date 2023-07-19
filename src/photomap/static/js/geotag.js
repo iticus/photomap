@@ -35,9 +35,9 @@ function filterPhotos(){
 	let url = new URL("/geotag", window.location.origin);
 	let data = {
 		"op": "get_photo_list",
-		"album_filter": document.getElementById("album_filter").innerText,
-		"start_filter": document.getElementById("start_filter").innerText,
-		"stop_filter": document.getElementById("stop_filter").innerText
+		"album_filter": document.getElementById("album").value,
+		"start_filter": document.getElementById("fromDate").value,
+		"stop_filter": document.getElementById("toDate").value
 	}
 	url.search = new URLSearchParams(data).toString();
 	fetch(url, {method: "GET"})
@@ -77,8 +77,8 @@ function initMap() {
 		popup.setLatLng(e.latlng).setContent(`You clicked the map at ${e.latlng.toString()}`).openOn(map);
 	}
 
-	document.getElementById("start_filter").innerHTML = "2020-01-01";
-	document.getElementById("stop_filter").innerHTML = "2021-01-01";
+	document.getElementById("fromDate").value = "2020-01-01";
+	document.getElementById("toDate").value = "2021-01-01";
 
 	filterPhotos();
 }

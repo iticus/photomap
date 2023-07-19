@@ -5,7 +5,6 @@ Created on 2023-01-07
 """
 
 import asyncio
-import os
 
 import aiohttp.web
 import pytest

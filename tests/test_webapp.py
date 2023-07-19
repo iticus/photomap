@@ -12,7 +12,7 @@ async def test_homepage(photomap_app: web.Application) -> None:
     assert request.status == 200
     response = await request.text()
     assert "<title>Photomap</title>" in response
-    assert 'bootstrap.bundle.min.js' in response
+    assert "bootstrap.bundle.min.js" in response
 
 
 async def test_map(photomap_app: web.Application) -> None:
@@ -21,7 +21,7 @@ async def test_map(photomap_app: web.Application) -> None:
     assert request.status == 200
     response = await request.text()
     assert "<title>Main map - photomap</title>" in response
-    assert 'photos.push({' in response
+    assert "photos.push({" in response
     assert '<div id="mapCanvas" class="d-flex"></div>' in response
     assert '<script type="text/javascript" src="/static/js/leaflet.markercluster.js"></script>' in response
     assert "leaflet.js" in response
@@ -53,8 +53,8 @@ async def test_geotag_ajax(photomap_app: web.Application) -> None:
     assert "width" in photo
     assert "lat" not in photo
     assert "lng" not in photo
-    assert isinstance(photo["make"], str | None)
-    assert isinstance(photo["model"], str | None)
+    assert isinstance(photo["make"], str) or photo["make"] is None
+    assert isinstance(photo["model"], str) or photo["model"] is None
 
 
 async def test_stats(photomap_app: web.Application) -> None:
@@ -80,4 +80,4 @@ async def test_stats_ajax(photomap_app: web.Application) -> None:
     assert "width" in photo
     assert "lat" in photo
     assert "lng" in photo
-    assert isinstance(photo["moment"], int | None)
+    assert isinstance(photo["moment"], int) or photo["moment"] is None
