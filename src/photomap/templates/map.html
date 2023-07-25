@@ -16,18 +16,9 @@
         photos.push({
             "id": {{ photo.id }},
             "ihash": "{{ photo.ihash }}",
-            "lat": {{ photo.lat }},
-            "lng": {{ photo.lng }},
-            "altitude": {{ photo.altitude or 0.0}},
-            "moment": new Date({{ photo.moment }} * 1000),
             "filename": "{{ photo.filename }}",
-            "size": {{ photo.size }},
-            "camera": "{{ photo.make }}" + " " + "{{ photo.model }}",
-            "orientation": "{{ photo.orientation }}",
-            "path": "{{ photo.path }}",
-            "width": "{{ photo.width }}",
-            "height": "{{ photo.height }}",
-            "description": "{{ photo.description }}"
+            "lat": {{ photo.lat }},
+            "lng": {{ photo.lng }}
         });
     {% endfor %}
 </script>

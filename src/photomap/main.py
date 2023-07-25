@@ -63,6 +63,7 @@ def make_app() -> web.Application:
     app.router.add_view("/login{tail:.*?}", views.Login)
     app.router.add_view("/logout{tail:.*?}", views.Logout)
     app.router.add_view("/geotag{tail:.*?}", views.Geo)
+    app.router.add_view("/photo{tail:.*?}", views.Photo)
     app.router.add_view("/stats{tail:.*?}", views.Stats)
     app.router.add_view("/upload{tail:.*?}", views.Upload)
     path = os.path.join(os.path.dirname(__file__), "static")

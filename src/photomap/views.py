@@ -152,6 +152,21 @@ class Geo(BaseView):
         return web.json_response({"status": "error", "details": "unknown operation"}, status=400)
 
 
+class Photo(BaseView):
+    """
+    View for retrieving photo details
+    """
+
+    async def get(self) -> web.Response:
+        photo_id = self.request.query.get("photo_id")
+        if not photo_id or not photo_id.isdigit():
+            return web.json_response({"status": "error", "details": "provide photo_id"}, status=400)
+        photo = await self.database.get_photo(int(photo_id))
+        if not photo:
+            return web.json_response({"status": "error", "details": "no photo found for this ID"}, status=404)
+        return web.json_response({"status": "ok", "photo": dict(photo)})
+
+
 class Upload(BaseView):
     """
     Handler for uploading pictures (manually or via import script)

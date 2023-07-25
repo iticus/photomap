@@ -270,6 +270,23 @@ class Database:
             await self.pool.release(conn)
         return hashes
 
+    async def get_photo(self, photo_id: int) -> Photo:
+        """
+        Retrieve photo details
+        :param photo_id: id of the photo to retrieve
+        :return: photo details
+        """
+        conn = await self.pool.acquire()
+        query = """SELECT photo.id, ihash, extract(epoch from moment)::bigint as moment, filename, size,
+                make, model, orientation, path, width, height, photo.description
+                FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id
+                WHERE photo.id=$1"""
+        try:
+            photo = await conn.fetchrow(query, photo_id)
+        finally:
+            await self.pool.release(conn)
+        return photo
+
     async def get_geotagged_photos(self) -> list[Photo]:
         """
         Retrieve all existing photos from the database that have location information

@@ -45,16 +45,23 @@ function filterPhotos(){
 	.then(photos => {
 		let photoList = document.getElementById("photoList");
 		photoList.innerHTML = "";
-		photosById = {};
 		let content = "";
 		for ( let i = 0; i < photos.length; i++) {
 			let photo = photos[i];
-			photosById[photo.id] = photo;
-			let imgSrc = "/media/thumbnails/64px/" + photo.ihash[0] + "/" + photo.ihash[1] + "/" + photo.ihash;
-			content += '<img class="photo-list-item" draggable="true" ondragstart="drag(event)" onclick="showImage(' +  photo.id + ')" src=' + imgSrc +
-					' id="' + photo.id + '" data-hash="' + photo.ihash + '">';
+			let img = document.createElement("img");
+			img.classList.add("photo-list-item");
+			img.draggable = true;
+			img.onclick = function () {
+				showImage(photo);
+			};
+			img.src = "/media/thumbnails/64px/" + photo.ihash[0] + "/" + photo.ihash[1] + "/" + photo.ihash;
+			img.id = photo.id;
+			img.ondragstart = function (event) {
+				drag(event);
+			}
+			img.dataset.hash = photo.ihash;
+			photoList.appendChild(img);
 		}
-		photoList.innerHTML = content;
 	});
 }
 

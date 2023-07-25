@@ -20,8 +20,7 @@ function formatDatetime(moment){
     return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 
-function showImage(image_id) {
-	let photo = photosById[image_id];
+function showImage(photo) {
 	let img = '<img id="dynamicImage" style="max-width: 100%; max-height: 100%" src="/media/thumbnails/960px/'+
 			photo.ihash[0] + '/' + photo.ihash[1] + '/' + photo.ihash + '">';
 	document.getElementById("photoModalBody").innerHTML = img;
@@ -49,14 +48,13 @@ function generateInfoWindowContent(photo) {
 	let content = '<div style="width: 480px; height: 200px">';
 	content += '<div style="display: inline-block; width: 280px">';
 	content += '<table class="info-table">'
-	content += '<tr><td><b>Filename</b></td><td>' + photo['filename'] + '</td></tr>';
-	content += '<tr><td><b>Description</b></td><td>' + photo['description'] + '</td></tr>';
-	content += '<tr><td><b>Camera</b></td><td>' + photo['camera'] + '</td></tr>';
-	content += '<tr><td><b>Date</b></td><td>' + formatDatetime(photo['moment']) + '</td></tr>';
+	content += '<tr><td><b>Filename</b></td><td>' + photo.filename + '</td></tr>';
+	content += '<tr><td><b>Description</b></td><td>' + photo.description + '</td></tr>';
+	content += '<tr><td><b>Camera</b></td><td>' + photo.make + " " + photo.model + '</td></tr>';
+	let dt = new Date(photo.moment * 1000);
+	content += '<tr><td><b>Date</b></td><td>' + formatDatetime(dt) + '</td></tr>';
 	content += '</table></div>'
-	content += '<div style="display: inline-block; width: 120px">';
-	content += '<img style="cursor: pointer" onClick="showImage(' + photo['id'] + ')"' +
-		'src="/media/thumbnails/192px/'+ photo.ihash[0] + '/' + photo.ihash[1] + '/' + photo.ihash + '">';
+	content += '<div id="popupImg" style="display: inline-block; width: 120px">';
 	content += '</div></div>';
 	return content;
 }

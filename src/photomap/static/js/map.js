@@ -5,7 +5,6 @@ let markers = [];
 let optionPaneState = 0;
 let mcOptions = {gridSize: 50, maxZoom: 18, imagePath: "/static/images/m"};
 let markerCluster = null;
-let photosById = {};
 
 function enableClustering() {
 	if (markerCluster == null)
@@ -48,17 +47,33 @@ function initMap() {
 	bounds = L.latLngBounds();
 	for ( let i=0; i<window.photos.length; i++){
 		let photo = photos[i];
-		photosById[photo["id"]] = photo;
-		let point = L.latLng(photo['lat'], photo['lng']);
+		let point = L.latLng(photo.lat, photo.lng);
 		let iconUrl= '/media/thumbnails/64px/' + photo.ihash[0] + '/' + photo.ihash[1] + '/' + photo.ihash;
 		bounds.extend(point);
 		let marker = L.marker(point, {
 			title: photo['filename'],
 			icon: L.icon({iconUrl: iconUrl}),
-			image_id: photo['id']
+			image_id: photo.id
 		});
-		let content = generateInfoWindowContent(photo);
-		marker.bindPopup(content, {maxWidth : 540});
+		marker.bindPopup("content", {maxWidth : 540}).on("popupopen", function (popup) {
+			fetch(`/photo?${new URLSearchParams({"photo_id": photo.id})}`, {method: "GET"})
+			.then(response => response.json())
+			.then(data => {
+				if (data.status === "ok") {
+					marker.setPopupContent(generateInfoWindowContent(data.photo));
+					let img = document.createElement("img");
+					img.style.cursor = "pointer";
+					img.onclick = function () {
+						showImage(photo);
+					};
+					img.src = "/media/thumbnails/192px/" + photo.ihash[0] + "/" + photo.ihash[1] + "/" + photo.ihash;
+					let popupImg = document.getElementById("popupImg");
+					popupImg.appendChild(img);
+				}
+				else
+					alert("Error: " + JSON.stringify(data));
+			});
+		});
 		markers.push(marker);
 		markerCluster.addLayer(marker);
 	}
