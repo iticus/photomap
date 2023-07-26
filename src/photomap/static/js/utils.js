@@ -1,13 +1,11 @@
-function generateRotateCss(degrees){
-	let properties = ['-ms-transform', /* IE 9 */
-	                  '-moz-transform', /* Firefox */
-	                  '-webkit-transform', /* Safari and Chrome */
-	                  '-o-transform']; /* Opera */
-	let style = '';
-	for (let i=0; i<properties.length; i++)	{
-			style += properties[i] + ': rotate(' + degrees + 'deg);';
-		}
-	return style
+function getRotation (value) {
+  	if (value == 3)
+		  return 'rotate(180deg)'
+	else if (value == 6)
+	  return 'rotate(90deg)'
+	else if (value == 8)
+	  return 'rotate(270deg)'
+	return 'rotate(0deg)'
 }
 
 function formatDatetime(moment){
@@ -21,41 +19,30 @@ function formatDatetime(moment){
 }
 
 function showImage(photo) {
-	let img = '<img id="dynamicImage" style="max-width: 100%; max-height: 100%" src="/media/thumbnails/960px/'+
+	let title = `${photo.filename}, taken on ${formatDatetime(new Date(photo.moment * 1000))} with ${photo.make} ${photo.model}`;
+	document.getElementById("photoModalTitle").innerHTML = title;
+	let img = '<img id="dynamicImage" style="max-width: 100%; height: auto" src="/media/thumbnails/960px/'+
 			photo.ihash[0] + '/' + photo.ihash[1] + '/' + photo.ihash + '">';
 	document.getElementById("photoModalBody").innerHTML = img;
+	if (photo.orientation != 1)
+		document.getElementById("dynamicImage").style.transform = getRotation(photo.orientation);
 	const myModal = new bootstrap.Modal(document.getElementById("photoModal"), {});
 	myModal.show();
 }
 
-function openOptionsPane() {
-	document.getElementById("optionsPane").style.display = "block";
-}
-
-function closeOptionsPane() {
-	document.getElementById("optionsPane").style.display = "none";
-}
-
-function toggleOptionsPane() {
-	if (optionPaneState == 1)
-		closeOptionsPane();
-	else
-		openOptionsPane();
-	optionPaneState = 1 - optionPaneState;
-}
-
 function generateInfoWindowContent(photo) {
-	let content = '<div style="width: 480px; height: 200px">';
-	content += '<div style="display: inline-block; width: 280px">';
-	content += '<table class="info-table">'
+	let content = '<div class="row" style="width: 480px;">';
+	content += '<div class="col-md-6">';
+	content += '<table class="table table-sm table-striped table-hover" style="white-space:nowrap;">'
 	content += '<tr><td><b>Filename</b></td><td>' + photo.filename + '</td></tr>';
+	content += '<tr><td><b>Size</b></td><td>' + photo.size + ' bytes</td></tr>';
 	content += '<tr><td><b>Description</b></td><td>' + photo.description + '</td></tr>';
 	content += '<tr><td><b>Camera</b></td><td>' + photo.make + " " + photo.model + '</td></tr>';
+	content += '<tr><td><b>W x H</b></td><td>' + photo.width + ' x ' + photo.height + 'px</td></tr>';
 	let dt = new Date(photo.moment * 1000);
 	content += '<tr><td><b>Date</b></td><td>' + formatDatetime(dt) + '</td></tr>';
 	content += '</table></div>'
-	content += '<div id="popupImg" style="display: inline-block; width: 120px">';
-	content += '</div></div>';
+	content += '<div class="col-md-6 d-flex justify-content-center" id="popupImg" ></div></div></div>';
 	return content;
 }
 

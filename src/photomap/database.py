@@ -7,7 +7,6 @@ Created on Nov 1, 2015
 import datetime
 import json
 import logging
-from typing import Optional
 
 import asyncpg
 from pydantic import Field
@@ -22,7 +21,7 @@ class Album:
     Main album class
     """
 
-    album_id: Optional[int]
+    album_id: int | None
     start_moment: datetime.datetime = Field(None, title="Album earliest date")
     stop_moment: datetime.datetime = Field(None, title="Album latest date")
     name: str = Field(None, title="Album name", max_length=256)
@@ -35,7 +34,7 @@ class Camera:
     Main camera class
     """
 
-    camera_id: Optional[int]
+    camera_id: int | None
     make: str = Field(None, title="Camera make", max_length=256)
     model: str = Field(None, title="Camera model", max_length=256)
 
@@ -46,9 +45,9 @@ class Photo:  # pylint: disable=too-many-instance-attributes
     Main photo class
     """
 
-    photo_id: Optional[int]
-    album: Optional[int]
-    camera: Optional[int]
+    photo_id: int | None
+    album: int | None
+    camera: int | None
     moment: datetime.datetime
     ihash: str = Field(None, title="Photo ihash (sha256)", max_length=64)
     description: str = Field(None, title="Photo description", max_length=8192)
@@ -75,7 +74,6 @@ class Tag:
     """
 
     tag_id: int
-    photo_id: int
     name: str = Field(None, title="Tag text", max_length=64)
 
 
@@ -104,7 +102,9 @@ class Database:
             await conn.set_type_codec("jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
             # await conn.set_type_codec("geometry", encoder=encode_geometry,decoder=decode_geometry, format="binary")
 
-        self.pool = await asyncpg.create_pool(dsn=self.dsn, min_size=2, max_size=8, init=init_connection)
+        self.pool = await asyncpg.create_pool(  # pylint: disable=attribute-defined-outside-init
+            dsn=self.dsn, min_size=2, max_size=8, init=init_connection
+        )
         logger.info("successfully connected to database %s on %s", self.db_name, self.host)
 
     async def disconnect(self) -> None:
@@ -214,8 +214,8 @@ class Database:
             photo.gps_ref,
             photo.access,
         ]
-        if hasattr(photo, "id"):
-            data.append(photo.id)
+        if hasattr(photo, "photo_id"):
+            data.append(photo.photo_id)
             query = """UPDATE photo SET ihash=$1, description=$2, album_id=$3, moment=$4, path=$5, filename=$6,
                    width=$7, height=$8, size=$9, camera_id=$10, orientation=$11, lat=$12, lng=$13, altitude=$14,
                    gps_ref=$15, access=$16 WHERE id=$17 RETURNING id"""
@@ -326,9 +326,9 @@ class Database:
         :return: tag ID
         """
         conn = await self.pool.acquire()
-        data = [tag.name, tag.photo_id]
-        if not hasattr(tag, "id"):
-            data.append(tag.id)
+        data: list[str | int] = [tag.name]
+        if not hasattr(tag, "tag_id"):
+            data.append(tag.tag_id)
             query = "UPDATE tag SET name=$1, photo=$2 WHERE id=$3 RETURNING id"
         else:
             query = "INSERT INTO tag(name, photo_id) VALUES($1, $2) RETURNING id"
@@ -412,9 +412,14 @@ class Database:
             "CREATE INDEX IF NOT EXISTS photo_lng_idx ON photo USING btree(lng)",
             "CREATE INDEX IF NOT EXISTS photo_moment_idx ON photo USING btree(moment)",
             "CREATE INDEX IF NOT EXISTS photo_access_idx ON photo USING btree(access)",
-            """CREATE TABLE IF NOT EXISTS photo_tag(
+            """CREATE TABLE IF NOT EXISTS tag(
+                    id serial NOT NULL,
+                    name text NOT NULL UNIQUE
+            )""",
+            "CREATE INDEX IF NOT EXISTS tag_name_idx ON tag USING btree(name)",
+            """CREATE TABLE IF NOT EXISTS photo_tags(
                   id serial NOT NULL,
-                  name text NOT NULL,
+                  tag_id text NOT NULL REFERENCES ,
                   photo_id integer NOT NULL,
                   CONSTRAINT tag_pkey PRIMARY KEY (id),
                   CONSTRAINT tag_photo_id_fkey FOREIGN KEY(photo_id) REFERENCES photo(id)

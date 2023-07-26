@@ -2,22 +2,7 @@ let map;
 let bounds;
 let infoWindow;
 let markers = [];
-let optionPaneState = 0;
-let mcOptions = {gridSize: 50, maxZoom: 18, imagePath: "/static/images/m"};
 let markerCluster = null;
-
-function enableClustering() {
-	if (markerCluster == null)
-		markerCluster = new MarkerClusterer(map, markers, mcOptions);
-}
-
-function disableClustering() {
-	markerCluster.clearMarkers();
-	markerCluster = null;
-	for ( let i = 0; i < markers.length; i++) {
-		markers[i].setMap(map);
-	}
-}
 
 function initMap() {
 
@@ -55,17 +40,20 @@ function initMap() {
 			icon: L.icon({iconUrl: iconUrl}),
 			image_id: photo.id
 		});
-		marker.bindPopup("content", {maxWidth : 540}).on("popupopen", function (popup) {
+		marker.bindPopup("content", {maxWidth : "auto"}).on("popupopen", function (layer) {
 			fetch(`/photo?${new URLSearchParams({"photo_id": photo.id})}`, {method: "GET"})
 			.then(response => response.json())
 			.then(data => {
 				if (data.status === "ok") {
 					marker.setPopupContent(generateInfoWindowContent(data.photo));
 					let img = document.createElement("img");
+					img.classList.add("rounded");
 					img.style.cursor = "pointer";
 					img.onclick = function () {
-						showImage(photo);
+						showImage(data.photo);
 					};
+					if (data.photo.orientation != 1)
+						img.style.transform = getRotation(data.photo.orientation);
 					img.src = "/media/thumbnails/192px/" + photo.ihash[0] + "/" + photo.ihash[1] + "/" + photo.ihash;
 					let popupImg = document.getElementById("popupImg");
 					popupImg.appendChild(img);

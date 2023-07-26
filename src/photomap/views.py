@@ -216,10 +216,9 @@ class Upload(BaseView):
             lat=exif_data["lat"],
             lng=exif_data["lng"],
             altitude=exif_data["altitude"],
-            gps_ref="".join(exif_data["gps_ref"]),
+            gps_ref=exif_data["gps_ref"],
             access=1,
         )
-
         cameras = await self.database.get_cameras()
         camera_dict = {}
         for camera in cameras:

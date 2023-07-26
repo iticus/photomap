@@ -4,7 +4,7 @@ Created on Nov 25, 2015
 @author: ionut
 """
 
-from redis import Redis
+from redis import Redis  # type: ignore
 
 try:
     import cPickle as pickle

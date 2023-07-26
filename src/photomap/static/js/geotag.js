@@ -45,7 +45,6 @@ function filterPhotos(){
 	.then(photos => {
 		let photoList = document.getElementById("photoList");
 		photoList.innerHTML = "";
-		let content = "";
 		for ( let i = 0; i < photos.length; i++) {
 			let photo = photos[i];
 			let img = document.createElement("img");

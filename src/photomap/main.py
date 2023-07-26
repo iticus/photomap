@@ -14,7 +14,7 @@ import jinja2
 from aiohttp import web
 from aiohttp_session import setup
 from aiohttp_session.redis_storage import RedisStorage
-from redis import asyncio as aioredis
+from redis import asyncio as aioredis  # type: ignore
 
 import settings
 import views

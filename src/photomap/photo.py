@@ -15,7 +15,7 @@ import utils
 from database import Photo
 
 
-def parse_exif(file_body: bytes, image_file: PilImage) -> dict[str, str | float | int | datetime.datetime]:
+def parse_exif(file_body: bytes, image_file: PilImage) -> dict:
     """
     Parse EXIF data from image bytes
     :param file_body: raw image data
@@ -23,63 +23,51 @@ def parse_exif(file_body: bytes, image_file: PilImage) -> dict[str, str | float 
     :return: exif data
     """
     exif_data = piexif.load(file_body)
-    width = exif_data.get("Exif", {}).get(piexif.ExifIFD.PixelXDimension, None) or image_file.width
-    height = exif_data.get("Exif", {}).get(piexif.ExifIFD.PixelYDimension, None) or image_file.height
-    gps_ref = ["N", "E", "0"]
-    lat = None
-    lng = None
-    altitude = None
-
-    if "GPS" in exif_data:
-        lat = utils.exif2gps(exif_data["GPS"].get(piexif.GPSIFD.GPSLatitude))
-        lng = utils.exif2gps(exif_data["GPS"].get(piexif.GPSIFD.GPSLongitude))
-        altitude = exif_data["GPS"].get(piexif.GPSIFD.GPSAltitude)
-        if isinstance(altitude, tuple):
-            if altitude[1] == 0:  # avoid division by 0
-                altitude = 0
-            else:
-                altitude = altitude[0] / altitude[1]
-        if altitude and altitude > 12000:  # some cameras set a huge number for alt (like 4294967275)
-            altitude = 0
-        if piexif.GPSIFD.GPSLatitudeRef in exif_data["GPS"]:
-            ref = exif_data["GPS"].get(piexif.GPSIFD.GPSLatitudeRef, b"").decode()
-            if gps_ref[0] == "S":
-                gps_ref[0] = ref
-                lat = -1 * lat
-        if piexif.GPSIFD.GPSLongitudeRef in exif_data["GPS"]:
-            ref = exif_data["GPS"].get(piexif.GPSIFD.GPSLongitudeRef, b"").decode()
-            if gps_ref[0] == "W":
-                gps_ref[1] = ref
-                lng = -1 * lng
-        if piexif.GPSIFD.GPSAltitudeRef in exif_data["GPS"]:
-            ref = str(exif_data["GPS"].get(piexif.GPSIFD.GPSAltitudeRef, ""))
-            if ref != "\x00":
-                gps_ref[2] = ref
-
     camera_make = exif_data["0th"].get(piexif.ImageIFD.Make, b"").decode().strip("\x00")
     camera_model = exif_data["0th"].get(piexif.ImageIFD.Model, b"").decode().strip("\x00")
     if camera_make in camera_model:
         camera_model = camera_model.replace(camera_make, "").strip()
-    orientation = exif_data["0th"].get(piexif.ImageIFD.Orientation, 1)
-    if orientation == 0:
-        orientation = 1  # some panorama images have orientation = 0 which is invalid
     moment = exif_data["0th"].get(piexif.ImageIFD.DateTime, b"1970:01:01 00:00:00")
     if moment == b"0000:00:00 00:00:00":
         moment = b"1970:01:01 00:00:00"  # fix bad timestamp in EXIF data
     moment = datetime.datetime.strptime(moment.decode(), "%Y:%m:%d %H:%M:%S")
-    return {
+    data = {
         "moment": moment,
         "camera_make": camera_make,
         "camera_model": camera_model,
-        "lat": lat,
-        "lng": lng,
-        "orientation": orientation,
-        "width": width,
-        "height": height,
-        "altitude": altitude,
-        "gps_ref": gps_ref,
+        "orientation": exif_data["0th"].get(piexif.ImageIFD.Orientation, 1) or 1,
+        "width": exif_data.get("Exif", {}).get(piexif.ExifIFD.PixelXDimension, None) or image_file.width,
+        "height": exif_data.get("Exif", {}).get(piexif.ExifIFD.PixelYDimension, None) or image_file.height,
         "size": len(file_body),
+        "lat": None,
+        "lng": None,
+        "altitude": None,
+        "gps_ref": ["N", "E", "0"],
     }
+    if "GPS" in exif_data:
+        data["lat"] = utils.exif2gps(exif_data["GPS"].get(piexif.GPSIFD.GPSLatitude))
+        data["lng"] = utils.exif2gps(exif_data["GPS"].get(piexif.GPSIFD.GPSLongitude))
+        data["altitude"] = exif_data["GPS"].get(piexif.GPSIFD.GPSAltitude)
+        if isinstance(data["altitude"], tuple):
+            data["altitude"] = data["altitude"][0] / data["altitude"][1] if data["altitude"][1] != 0 else 0
+        if data["altitude"] and data["altitude"] > 12000:  # some cameras set a huge number for alt (like 4294967275)
+            data["altitude"] = 0
+        if piexif.GPSIFD.GPSLatitudeRef in exif_data["GPS"]:
+            ref = exif_data["GPS"].get(piexif.GPSIFD.GPSLatitudeRef, b"").decode()
+            if ref == "S":
+                data["gps_ref"][0] = ref
+                data["lat"] = -1 * data["lat"]
+        if piexif.GPSIFD.GPSLongitudeRef in exif_data["GPS"]:
+            ref = exif_data["GPS"].get(piexif.GPSIFD.GPSLongitudeRef, b"").decode()
+            if ref == "W":
+                data["gps_ref"][1] = ref
+                data["lng"] = -1 * data["lng"]
+        if piexif.GPSIFD.GPSAltitudeRef in exif_data["GPS"]:
+            ref = exif_data["GPS"].get(piexif.GPSIFD.GPSAltitudeRef, b"")
+            if ref != "\x00":
+                data["gps_ref"][2] = ref
+    data["gps_ref"] = "".join(data["gps_ref"])
+    return data
 
 
 def make_thumbnails(image_file: PilImage, photo: Photo, base_path: str, overwrite: bool = False) -> None:

@@ -3,26 +3,3 @@ html, body {
      padding: 0;
      height: 100%;
 }
-
-table.info-table {
-	border-collapse: collapse;
-	text-align: center;
-	font-size: 13px;
-}
-
-table.info-table td, table.info-table th {
-	border-right: 1px solid #CCC;
-	padding: 3px;
-}
-
-table.info-table tr td:first-child {
-	text-align: right;
-}
-
-table.info-table tr td:last-child {
-	text-align: left;
-}
-
-table.info-table tr:nth-child(even) {
-	background-color: #E8E8E8;
-}
