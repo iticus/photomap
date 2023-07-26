@@ -2,19 +2,19 @@ function getRotation (value) {
   	if (value == 3)
 		  return 'rotate(180deg)'
 	else if (value == 6)
-	  return 'rotate(90deg)'
+	  return 'rotate(90deg) scale(0.6)'
 	else if (value == 8)
-	  return 'rotate(270deg)'
+	  return 'rotate(270deg) scale(0.6)'
 	return 'rotate(0deg)'
 }
 
 function formatDatetime(moment){
     let year = moment.getFullYear();
-    let month = ('0' + (moment.getMonth()+1)).substr(-2,2);
-    let day = ('0' + moment.getDate()).substr(-2,2);
-    let hour = ('0' + moment.getHours()).substr(-2,2);
-    let minute = ('0' + moment.getMinutes()).substr(-2,2);
-    let second = ('0' + moment.getSeconds()).substr(-2,2);
+    let month = ('0' + (moment.getMonth()+1)).slice(-2);
+    let day = ('0' + moment.getDate()).slice(-2);
+    let hour = ('0' + moment.getHours()).slice(-2);
+    let minute = ('0' + moment.getMinutes()).slice(-2);
+    let second = ('0' + moment.getSeconds()).slice(-2);
     return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 

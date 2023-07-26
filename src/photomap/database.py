@@ -419,13 +419,11 @@ class Database:
             "CREATE INDEX IF NOT EXISTS tag_name_idx ON tag USING btree(name)",
             """CREATE TABLE IF NOT EXISTS photo_tags(
                   id serial NOT NULL,
-                  tag_id text NOT NULL REFERENCES ,
-                  photo_id integer NOT NULL,
-                  CONSTRAINT tag_pkey PRIMARY KEY (id),
-                  CONSTRAINT tag_photo_id_fkey FOREIGN KEY(photo_id) REFERENCES photo(id)
+                  tag_id integer REFERENCES tag(id),
+                  photo_id integer REFERENCES photo(id)
             )""",
-            "CREATE INDEX IF NOT EXISTS tag_name_idx ON photo_tag USING btree(name)",
-            "CREATE INDEX IF NOT EXISTS tag_photo_id_idx ON photo_tag USING btree(photo_id)",
+            "CREATE INDEX IF NOT EXISTS tag_id_idx ON photo_tags USING btree(tag_id)",
+            "CREATE INDEX IF NOT EXISTS tag_photo_id_idx ON photo_tags USING btree(photo_id)",
         ]
         conn = await self.pool.acquire()
         for query in queries:
