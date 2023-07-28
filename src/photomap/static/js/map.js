@@ -52,8 +52,8 @@ function initMap() {
 					img.onclick = function () {
 						showImage(data.photo);
 					};
-					if (data.photo.orientation != 1)
-						img.style.transform = getRotation(data.photo.orientation);
+					// if (data.photo.orientation != 1)
+					// 	img.style.transform = getRotation(data.photo.orientation);
 					img.src = "/media/thumbnails/192px/" + photo.ihash[0] + "/" + photo.ihash[1] + "/" + photo.ihash;
 					popup.openOn(map);
 					let popupImg = document.getElementById("popupImg");

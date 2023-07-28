@@ -179,23 +179,19 @@ class Upload(BaseView):
         secret = self.request.headers.get("Authentication", "")
         if secret != self.config.SECRET:
             return web.json_response({"status": "error", "details": "invalid secret value"}, status=403)
-
         # TODO: use local cache for photo data
         all_photo_ihash = await self.database.get_all_ihash()
-        hashes = {[photo["ihash"] for photo in all_photo_ihash]}
+        hashes = {photo["ihash"] for photo in all_photo_ihash}
         data = await self.request.post()
         fileinfo = data["photo"]
         filename = data["filename"]
-        path = data["path"]
         file_body = fileinfo.file.read()
         sha1 = hashlib.sha1()
         sha1.update(file_body)
         ihash = sha1.hexdigest()
-
         if ihash in hashes:
             logger.debug("photo %s, %s already imported", ihash, filename)
             return web.json_response({"status": "error", "details": "photo hash already exists"}, status=409)
-
         loop = asyncio.get_running_loop()
         executor = self.request.app.executor
         image_file = await loop.run_in_executor(executor, partial(load_image, file_body))
@@ -209,10 +205,8 @@ class Upload(BaseView):
             moment=exif_data["moment"],
             width=exif_data["width"],
             height=exif_data["height"],
-            orientation=exif_data["orientation"],
             filename=filename,
             size=exif_data["size"],
-            path=path,
             lat=exif_data["lat"],
             lng=exif_data["lng"],
             altitude=exif_data["altitude"],
@@ -233,7 +227,6 @@ class Upload(BaseView):
                 photo.camera = result["id"]
         else:
             photo.camera = None
-
         result = await self.database.save_photo(photo)
         photo_id = int(result["id"])
         await loop.run_in_executor(executor, partial(make_thumbnails, image_file, photo, self.config.MEDIA_PATH))

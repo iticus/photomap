@@ -7,6 +7,7 @@ Created on Sep 11, 2012
 import os
 
 from PIL import Image as PilImage
+from PIL.Image import Image
 
 
 def exif2gps(exif_data: list | None) -> float | None:
@@ -53,6 +54,17 @@ def make_thumbnail(image: PilImage, outfile: str, width: int, height: int) -> No
         temp.save(outfile, "JPEG")
     except IOError as exc:
         print(f"cannot create thumbnail for {image.filename}: {exc}")
+
+
+def rotate_image(filename: str, degrees: int) -> None:
+    """
+    Rotate image in place
+    :param filename: image to rotate
+    :param degrees: how many degrees to rotate by
+    """
+    image = Image.open(filename)
+    new_image = image.rotate(degrees)
+    new_image.save(filename, format=image.format)
 
 
 def generate_path(base_path: str, ihash: str) -> str:

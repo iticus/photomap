@@ -32,6 +32,8 @@ async def error_middleware(request: web.Request, handler: Callable) -> web.Respo
         logging.warning("cannot find page %s, 404", request.path)
         message = "requested page not found"
     except Exception as exc:  # pylint: disable=broad-exception-caught
+        if request.method == "POST" and request.path.startswith("/upload"):
+            return web.json_response({"status": "error", "message": f"{exc}"}, status=400)
         if not (request.raw_path.startswith("/media") or request.raw_path.endswith(".map")):
             logger.error("error processing request: %s", request.raw_path, exc_info=True)
         message = str(exc)

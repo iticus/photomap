@@ -1,14 +1,37 @@
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<title>Upload Image</title>
-</head>
-<body>
-        <h1>Select &amp; Upload</h1>
-        <form enctype="multipart/form-data" action="/upload" method="post">
-        		Secret: <input type="text" name="secret" /> <br />
-                File: <input type="file" name="image" /> <br /> <br />
-                <input type="submit" value="upload" />
-        </form>
-</body>
-</html>
+{% extends "base.html" %}
+{% block head %}
+    {{ super() }}
+    <script type="text/javascript" src="/static/js/upload.js"></script>
+{% endblock %}
+{% block body %}
+    <h3>Select &amp; Upload</h3>
+    <form onsubmit="javascript: return false;">
+        <div class="mb-3">
+            <label for="secret" class="form-label">Secret</label>
+            <input type="text" class="form-control" id="secret" name="secret">
+        </div>
+        <div class="mb-3">
+            <label for="uploadInput" class="form-label">Upload folder</label>
+            <input class="form-control" type="file" id="uploadInput" accept="image/*" multiple webkitdirectory>
+        </div>
+        <button class="btn btn-primary">Upload</button>
+    </form>
+    <div class="p-3 m-0 border-0">
+        <div class="progress" style="height: 30px;">
+            <div class="progress-bar bg-success" role="progressbar" id="progress" style="width: 0%">Processed 0%</div>
+        </div>
+        <p class="p-1" id="imported">Imported</p>
+        <p class="p-1" id="duplicates">Duplicates</p>
+        <p class="p-1" id="failed">Failed</p>
+        <p class="p-3">
+            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLog"
+                    aria-expanded="false" aria-controls="collapseLog">
+                Show errors
+            </button>
+        </p>
+        <div class="collapse" id="collapseLog">
+            <div class="card card-body" id="errorContent">
+            </div>
+        </div>
+    </div>
+{% endblock %}

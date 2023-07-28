@@ -1,13 +1,3 @@
-function getRotation (value) {
-  	if (value == 3)
-		  return 'rotate(180deg)'
-	else if (value == 6)
-	  return 'rotate(90deg) scale(0.6)'
-	else if (value == 8)
-	  return 'rotate(270deg) scale(0.6)'
-	return 'rotate(0deg)'
-}
-
 function formatDatetime(moment){
     let year = moment.getFullYear();
     let month = ('0' + (moment.getMonth()+1)).slice(-2);
@@ -24,8 +14,8 @@ function showImage(photo) {
 	let img = '<img id="dynamicImage" style="max-width: 100%; height: auto" src="/media/thumbnails/960px/'+
 			photo.ihash[0] + '/' + photo.ihash[1] + '/' + photo.ihash + '">';
 	document.getElementById("photoModalBody").innerHTML = img;
-	if (photo.orientation != 1)
-		document.getElementById("dynamicImage").style.transform = getRotation(photo.orientation);
+	// if (photo.orientation != 1)
+	// 	document.getElementById("dynamicImage").style.transform = getRotation(photo.orientation);
 	const myModal = new bootstrap.Modal(document.getElementById("photoModal"), {});
 	myModal.show();
 }

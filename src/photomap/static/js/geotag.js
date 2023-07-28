@@ -1,6 +1,4 @@
 let map = null;
-let optionPaneState = 0;
-let photosById = {};
 
 function allowDrop(ev) {
 	ev.preventDefault();

@@ -51,18 +51,13 @@ class Photo:  # pylint: disable=too-many-instance-attributes
     moment: datetime.datetime
     ihash: str = Field(None, title="Photo ihash (sha256)", max_length=64)
     description: str = Field(None, title="Photo description", max_length=8192)
-    path: str = Field(None, title="File path (folder)", max_length=1024)
     filename: str = Field(None, title="Original filename", max_length=64)
     width: int = Field(None, title="Photo width (px)", gt=0, lt=64000)
     height: int = Field(None, title="Photo height (px)", gt=0, lt=64000)
     size: int = Field(None, title="Photo size (bytes)", gt=0, lt=10**9)  # 1 GB limit
-    orientation: int = Field(1, title="Photo orientation (code)", ge=1, le=8)
-    # 1: Horizontal (normal),  2: Mirrored horizontal, 3: Rotated 180, 4: Mirrored vertical
-    # 5: Mirrored horizontal then rotated 90 CCW, 6: Rotated 90 CW
-    # 7: Mirrored horizontal then rotated 90 CW, 8: Rotated 90 CCW
-    lat: float = Field(None, title="Latitude (deg)", ge=-90, le=90)
-    lng: float = Field(None, title="Longitude (deg)", ge=-180, le=180)
-    altitude: float = Field(None, title="Altitude (m)", ge=0, le=12000)
+    lat: float | None = Field(None, title="Latitude (deg)", ge=-90, le=90)
+    lng: float | None = Field(None, title="Longitude (deg)", ge=-180, le=180)
+    altitude: float | None = Field(None, title="Altitude (m)", ge=0, le=12000)
     gps_ref: str = Field(None, title="GPS reference (NE0)", min_length=3, max_length=3)
     access: int = Field(None, title="Photo permissions (rw)", gt=0, lt=16)
 
@@ -122,8 +117,8 @@ class Database:
         """
         conn = await self.pool.acquire()
         data = [album.name, album.description, album.start_moment, album.stop_moment]
-        if hasattr(album, "id"):
-            data.append(album.id)
+        if album.album_id:
+            data.append(album.album_id)
             query = "UPDATE album SET name=$1, description=$2, start_moment=$3, stop_moment=$4 WHERE id=$5 RETURNING id"
         else:
             query = "INSERT INTO album(name,description,start_moment,stop_moment) VALUES($1, $2, $3, $4) RETURNING id"
@@ -152,9 +147,9 @@ class Database:
         :return: camera ID
         """
         conn = await self.pool.acquire()
-        data = [camera.make, camera.model]
-        if hasattr(camera, "id"):
-            data.append(camera.id)
+        data: list[str | int] = [camera.make, camera.model]
+        if camera.camera_id:
+            data.append(camera.camera_id)
             query = "UPDATE camera SET make=$1, model=$2 WHERE id=$3 RETURNING id"
         else:
             query = "INSERT INTO camera(make, model) VALUES($1, $2) RETURNING id"
@@ -201,30 +196,30 @@ class Database:
             photo.description,
             photo.album,
             photo.moment,
-            photo.path,
             photo.filename,
             photo.width,
             photo.height,
             photo.size,
             photo.camera,
-            photo.orientation,
             photo.lat,
             photo.lng,
             photo.altitude,
             photo.gps_ref,
             photo.access,
         ]
-        if hasattr(photo, "photo_id"):
+        if photo.photo_id:
             data.append(photo.photo_id)
-            query = """UPDATE photo SET ihash=$1, description=$2, album_id=$3, moment=$4, path=$5, filename=$6,
-                   width=$7, height=$8, size=$9, camera_id=$10, orientation=$11, lat=$12, lng=$13, altitude=$14,
-                   gps_ref=$15, access=$16 WHERE id=$17 RETURNING id"""
+            query = """UPDATE photo SET ihash=$1, description=$2, album_id=$3, moment=$4, filename=$5,
+                   width=$6, height=$7, size=$8, camera_id=$9, lat=$10, lng=$11, altitude=$12,
+                   gps_ref=$13, access=$14 WHERE id=$15 RETURNING id"""
         else:
-            query = """INSERT INTO photo(ihash, description, album_id, moment, path, filename, width, height, size,
-            camera_id, orientation, lat, lng, altitude, gps_ref, access)
-            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id"""
+            query = """INSERT INTO photo(ihash, description, album_id, moment, filename, width, height, size,
+            camera_id, lat, lng, altitude, gps_ref, access)
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id"""
         try:
             photo_id = await conn.fetchrow(query, *data)
+        # except asyncpg.exceptions.PostgresError as exc:
+        #     logger.error("cannot save image: %s", exc)
         finally:
             await self.pool.release(conn)
         return photo_id
@@ -278,7 +273,7 @@ class Database:
         """
         conn = await self.pool.acquire()
         query = """SELECT photo.id, ihash, extract(epoch from moment)::bigint as moment, filename, size,
-                make, model, orientation, path, width, height, photo.description
+                make, model, width, height, photo.description
                 FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id
                 WHERE photo.id=$1"""
         try:
@@ -294,7 +289,7 @@ class Database:
         """
         conn = await self.pool.acquire()
         query = """SELECT photo.id, ihash, lat, lng, altitude, extract(epoch from moment) as moment,
-                filename, size, make, model, orientation, path, width, height, photo.description
+                filename, size, make, model, width, height, photo.description
                 FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id
                 WHERE lat IS NOT NULL AND lng IS NOT NULL"""
         try:
@@ -310,7 +305,7 @@ class Database:
         """
         conn = await self.pool.acquire()
         query = """SELECT photo.id, ihash, extract(epoch from moment)::bigint as moment, filename, size,
-                make, model, orientation, path, width, height, photo.description
+                make, model, width, height, photo.description
                 FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id
                 WHERE (lat IS NULL OR lng IS NULL) AND moment BETWEEN $1 AND $2 ORDER BY moment ASC LIMIT 30"""
         try:
@@ -327,7 +322,7 @@ class Database:
         """
         conn = await self.pool.acquire()
         data: list[str | int] = [tag.name]
-        if not hasattr(tag, "tag_id"):
+        if tag.tag_id:
             data.append(tag.tag_id)
             query = "UPDATE tag SET name=$1, photo=$2 WHERE id=$3 RETURNING id"
         else:
@@ -389,13 +384,11 @@ class Database:
                     description text NOT NULL,
                     album_id integer,
                     moment timestamp without time zone NOT NULL,
-                    path text NOT NULL,
                     filename text NOT NULL,
                     width smallint NOT NULL,
                     height smallint NOT NULL,
                     size integer NOT NULL,
                     camera_id integer,
-                    orientation smallint NOT NULL,
                     lat double precision,
                     lng double precision,
                     altitude double precision,
