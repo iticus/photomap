@@ -194,8 +194,7 @@ class Upload(BaseView):
             return web.json_response({"status": "error", "details": "photo hash already exists"}, status=409)
         loop = asyncio.get_running_loop()
         executor = self.request.app.executor
-        image_file = await loop.run_in_executor(executor, partial(load_image, file_body))
-        exif_data = await loop.run_in_executor(executor, partial(parse_exif, file_body, image_file))
+        exif_data = await loop.run_in_executor(executor, partial(parse_exif, file_body))
         photo = database.Photo(
             photo_id=None,
             camera=None,
@@ -212,7 +211,13 @@ class Upload(BaseView):
             altitude=exif_data["altitude"],
             gps_ref=exif_data["gps_ref"],
             access=1,
+            orientation=exif_data["orientation"],
         )
+        image_file = await loop.run_in_executor(executor, partial(load_image, file_body, photo))
+        if photo.width is None:
+            photo.width = image_file.width
+        if photo.height is None:
+            photo.height = image_file.height
         cameras = await self.database.get_cameras()
         camera_dict = {}
         for camera in cameras:

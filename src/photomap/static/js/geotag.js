@@ -63,24 +63,25 @@ function filterPhotos(){
 }
 
 function initMap() {
-
+	const esri_WorldStreetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+		attribution: 'ESRI Streets'
+	});
 	const esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
 		attribution: 'ESRI Satellite'
 	});
-
 	map = L.map("map", {
-		layers: [esri_WorldImagery]
+		layers: [esri_WorldStreetMap]
 	}).setView([45.75, 21.25], 12);
 
 	let baseMaps = {
-		// "ESRI World": esri_WorldStreetMap,
-		"ESRI Satellite": esri_WorldImagery
+		"ESRI Satellite": esri_WorldImagery,
+		"ESRI World": esri_WorldStreetMap,
 	};
 	const popup = L.popup();
 	function onMapClick(e) {
 		popup.setLatLng(e.latlng).setContent(`You clicked the map at ${e.latlng.toString()}`).openOn(map);
 	}
-
+	let layerControl = L.control.layers(baseMaps).addTo(map);
 	document.getElementById("fromDate").value = "2020-01-01";
 	document.getElementById("toDate").value = "2021-01-01";
 

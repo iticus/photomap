@@ -10,6 +10,11 @@ from PIL import Image as PilImage
 from PIL.Image import Image
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 def exif2gps(exif_data: list | None) -> float | None:
     """
     Transform coordinate from DMS into D.D
@@ -50,10 +55,10 @@ def make_thumbnail(image: PilImage, outfile: str, width: int, height: int) -> No
     size = (width, height)
     try:
         temp = image.copy()
-        temp.thumbnail(size, PilImage.ANTIALIAS)
+        temp.thumbnail(size, PilImage.LANCZOS)
         temp.save(outfile, "JPEG")
     except IOError as exc:
-        print(f"cannot create thumbnail for {image.filename}: {exc}")
+        logger.error("cannot create thumbnail for %s: %s", image.filename, exc)
 
 
 def rotate_image(filename: str, degrees: int) -> None:

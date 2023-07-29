@@ -60,6 +60,7 @@ class Photo:  # pylint: disable=too-many-instance-attributes
     altitude: float | None = Field(None, title="Altitude (m)", ge=0, le=12000)
     gps_ref: str = Field(None, title="GPS reference (NE0)", min_length=3, max_length=3)
     access: int = Field(None, title="Photo permissions (rw)", gt=0, lt=16)
+    orientation: int = Field(1, title="Photo orientation (code)", ge=1, le=8)
 
 
 @dataclass

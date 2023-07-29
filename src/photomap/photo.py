@@ -9,17 +9,16 @@ import os
 from io import BytesIO
 
 import piexif
-from PIL import Image as PilImage
+from PIL import Image as PilImage, ImageOps
 
 import utils
 from database import Photo
 
 
-def parse_exif(file_body: bytes, image_file: PilImage) -> dict:
+def parse_exif(file_body: bytes) -> dict:
     """
     Parse EXIF data from image bytes
     :param file_body: raw image data
-    :param image_file: Pil image object
     :return: exif data
     """
     exif_data = piexif.load(file_body)
@@ -36,8 +35,8 @@ def parse_exif(file_body: bytes, image_file: PilImage) -> dict:
         "camera_make": camera_make,
         "camera_model": camera_model,
         "orientation": exif_data["0th"].get(piexif.ImageIFD.Orientation, 1) or 1,
-        "width": exif_data.get("Exif", {}).get(piexif.ExifIFD.PixelXDimension, None) or image_file.width,
-        "height": exif_data.get("Exif", {}).get(piexif.ExifIFD.PixelYDimension, None) or image_file.height,
+        "width": exif_data.get("Exif", {}).get(piexif.ExifIFD.PixelXDimension, None),
+        "height": exif_data.get("Exif", {}).get(piexif.ExifIFD.PixelYDimension, None),
         "size": len(file_body),
         "lat": None,
         "lng": None,
@@ -91,11 +90,14 @@ def make_thumbnails(image_file: PilImage, photo: Photo, base_path: str, overwrit
             utils.make_thumbnail(image_file, outfile, resolution[0], resolution[1])
 
 
-def load_image(file_body: bytes) -> PilImage:
+def load_image(file_body: bytes, photo: Photo) -> PilImage:
     """
-    Load the raw image data into a PIL image object
+    Load the raw image data into a PIL image object, optionally rotating it
     :param file_body: raw image data
+    :param photo: photo object to check orientation
     :return: PIL image
     """
     image_file = PilImage.open(BytesIO(file_body))
+    if photo.orientation != 1:
+        image_file = ImageOps.exif_transpose(image_file)
     return image_file

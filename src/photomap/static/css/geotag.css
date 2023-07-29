@@ -18,7 +18,7 @@ div#photoList {
 
 button#filterButton {
     position: fixed;
-    right: 40px;
+    right: 80px;
     top: 60px;
     width: 120px;
     z-index: 500;
