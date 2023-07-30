@@ -5,14 +5,58 @@ Created on 2022-06-04
 """
 
 import datetime
+import logging
 import os
 from io import BytesIO
 
 import piexif
-from PIL import Image as PilImage, ImageOps
+from PIL import Image as PilImage
+from PIL import ImageOps
 
 import utils
 from database import Photo
+
+logger = logging.getLogger(__name__)
+
+
+def parse_location(exif: dict) -> dict:
+    """
+    Parse latitude, longitude from EXIF GPS data
+    :param exif: exif details loaded from image
+    :return: lat, lng, altitude
+    """
+    location = {"lat": None, "lng": None, "altitude": None}
+    if "GPS" not in exif:
+        return location
+    location["lat"] = utils.exif2gps(exif["GPS"].get(piexif.GPSIFD.GPSLatitude))
+    location["lng"] = utils.exif2gps(exif["GPS"].get(piexif.GPSIFD.GPSLongitude))
+    location["altitude"] = exif["GPS"].get(piexif.GPSIFD.GPSAltitude)
+    if isinstance(location["altitude"], tuple):
+        # pylint: disable=unsubscriptable-object
+        if location["altitude"][1] != 0:
+            location["altitude"] = location["altitude"][0] / location["altitude"][1]
+        else:
+            logger.warning("invalid altitude value: %s", location["altitude"])
+            location["altitude"] = 0
+    # some cameras set a huge number for alt (like 4294967275)
+    if location["altitude"] and location["altitude"] > 12000:
+        location["altitude"] = 0
+    if piexif.GPSIFD.GPSLatitudeRef in exif["GPS"]:
+        ref = exif["GPS"].get(piexif.GPSIFD.GPSLatitudeRef, b"").decode()
+        if ref == "S":  # south latitude
+            assert isinstance(location["lat"], float)
+            location["lat"] = -1 * location["lat"]
+    if piexif.GPSIFD.GPSLongitudeRef in exif["GPS"]:
+        ref = exif["GPS"].get(piexif.GPSIFD.GPSLongitudeRef, b"").decode()
+        if ref == "W":  # west longitude
+            assert isinstance(location["lng"], float)
+            location["lng"] = -1 * location["lng"]
+    if piexif.GPSIFD.GPSAltitudeRef in exif["GPS"]:
+        ref = exif["GPS"].get(piexif.GPSIFD.GPSAltitudeRef, b"").decode()
+        if ref == 1:  # below sea level
+            assert isinstance(location["lat"], float)
+            location["altitude"] = -1 * location["altitude"]
+    return location
 
 
 def parse_exif(file_body: bytes) -> dict:
@@ -38,34 +82,8 @@ def parse_exif(file_body: bytes) -> dict:
         "width": exif_data.get("Exif", {}).get(piexif.ExifIFD.PixelXDimension, None),
         "height": exif_data.get("Exif", {}).get(piexif.ExifIFD.PixelYDimension, None),
         "size": len(file_body),
-        "lat": None,
-        "lng": None,
-        "altitude": None,
-        "gps_ref": ["N", "E", "0"],
     }
-    if "GPS" in exif_data:
-        data["lat"] = utils.exif2gps(exif_data["GPS"].get(piexif.GPSIFD.GPSLatitude))
-        data["lng"] = utils.exif2gps(exif_data["GPS"].get(piexif.GPSIFD.GPSLongitude))
-        data["altitude"] = exif_data["GPS"].get(piexif.GPSIFD.GPSAltitude)
-        if isinstance(data["altitude"], tuple):
-            data["altitude"] = data["altitude"][0] / data["altitude"][1] if data["altitude"][1] != 0 else 0
-        if data["altitude"] and data["altitude"] > 12000:  # some cameras set a huge number for alt (like 4294967275)
-            data["altitude"] = 0
-        if piexif.GPSIFD.GPSLatitudeRef in exif_data["GPS"]:
-            ref = exif_data["GPS"].get(piexif.GPSIFD.GPSLatitudeRef, b"").decode()
-            if ref == "S":
-                data["gps_ref"][0] = ref
-                data["lat"] = -1 * data["lat"]
-        if piexif.GPSIFD.GPSLongitudeRef in exif_data["GPS"]:
-            ref = exif_data["GPS"].get(piexif.GPSIFD.GPSLongitudeRef, b"").decode()
-            if ref == "W":
-                data["gps_ref"][1] = ref
-                data["lng"] = -1 * data["lng"]
-        if piexif.GPSIFD.GPSAltitudeRef in exif_data["GPS"]:
-            ref = exif_data["GPS"].get(piexif.GPSIFD.GPSAltitudeRef, b"")
-            if ref != "\x00":
-                data["gps_ref"][2] = ref
-    data["gps_ref"] = "".join(data["gps_ref"])
+    data.update(parse_location(exif_data))
     return data
 
 

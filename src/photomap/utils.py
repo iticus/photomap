@@ -4,13 +4,11 @@ Created on Sep 11, 2012
 @author: ionut
 """
 
+import logging
 import os
 
 from PIL import Image as PilImage
 from PIL.Image import Image
-
-
-import logging
 
 logger = logging.getLogger(__name__)
 

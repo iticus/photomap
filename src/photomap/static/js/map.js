@@ -38,7 +38,8 @@ function initMap() {
 		let marker = L.marker(point, {
 			title: photo['filename'],
 			icon: L.icon({iconUrl: iconUrl}),
-			image_id: photo.id
+			image_id: photo.id,
+			// draggable: true
 		});
 		marker.on("click", function (layer) {
 			fetch(`/photo?${new URLSearchParams({"photo_id": photo.id})}`, {method: "GET"})
@@ -58,9 +59,39 @@ function initMap() {
 					popup.openOn(map);
 					let popupImg = document.getElementById("popupImg");
 					popupImg.appendChild(img);
+					let sw = document.createElement("div");
+					sw.innerHTML = '<div class="form-check form-switch">\n' +
+						'  <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" />\n' +
+						'  <label class="form-check-label" for="flexSwitchCheckDefault">Move</label>\n' +
+						'</div>';
+					if (marker.dragging.enabled())
+						sw.getElementsByTagName("input")[0].checked = true;
+					sw.onclick = function () {
+						if (marker.dragging.enabled())
+							marker.dragging.disable();
+						else
+							marker.dragging.enable();
+					}
+					let actionsSpan = document.getElementById("actions");
+					actionsSpan.appendChild(sw);
 				}
 				else
 					alert("Error: " + JSON.stringify(data));
+			});
+			marker.on("dragend", function(e) {
+				let position = marker.getLatLng();
+				marker.setLatLng(position);
+				popup.setLatLng(position);
+				let postData = {"id": photo.id, "hash": photo.ihash, "lat": position.lat, "lng": position.lng};
+				let headers = {"Content-Type": "application/json"};
+				let url = new URL("/geotag", window.location.origin);
+				url.search = new URLSearchParams({"op": "update_location"}).toString();
+				fetch(url, {method: 'POST', headers: headers, body: JSON.stringify(postData)})
+				.then(response => response.json())
+				.then(data => {
+					if (data.status !== "ok")
+						alert("Cannot update position: " + JSON.stringify(data));
+				});
 			});
 		});
 		markers.push(marker);

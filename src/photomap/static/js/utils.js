@@ -30,7 +30,8 @@ function generateInfoWindowContent(photo) {
 	content += '<tr><td><b>Camera</b></td><td>' + photo.make + " " + photo.model + '</td></tr>';
 	content += '<tr><td><b>W x H</b></td><td>' + photo.width + ' x ' + photo.height + 'px</td></tr>';
 	let dt = new Date(photo.moment * 1000);
-	content += '<tr><td><b>Date</b></td><td>' + formatDatetime(dt) + '</td></tr>';
+	content += '<tr><td><b><Date></Date></b></td><td>' + formatDatetime(dt) + '</td></tr>';
+	content += '<tr><td><b>Actions</b></td><td><span id="actions"></span></td></tr>';
 	content += '</table></div>'
 	content += '<div class="col-md-6 d-flex justify-content-center" id="popupImg" ></div></div></div>';
 	return content;
