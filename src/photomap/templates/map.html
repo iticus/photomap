@@ -10,18 +10,6 @@
     <script type="text/javascript" src="/static/js/leaflet.markercluster.js"></script>
     <script type="text/javascript" src="/static/js/utils.js"></script>
     <script type="text/javascript" src="/static/js/map.js"></script>
- <script>
-    window.photos = [];
-    {% for photo in photos %}
-        photos.push({
-            "id": {{ photo.id }},
-            "ihash": "{{ photo.ihash }}",
-            "filename": "{{ photo.filename }}",
-            "lat": {{ photo.lat }},
-            "lng": {{ photo.lng }}
-        });
-    {% endfor %}
-</script>
 {% endblock %}
 {% block body %}
     <div class="modal fade" id="photoModal" tabindex="-1" role="dialog" aria-labelledby="photoModalTitle" aria-hidden="true">

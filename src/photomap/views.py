@@ -107,14 +107,15 @@ class Map(BaseView):
     """
 
     async def get(self) -> web.Response:
-        photos = await cache.get_value(self.cache, "geotagged_photos")
-        if not photos:
-            photos = await self.database.get_geotagged_photos()
-            photos = [dict(photo) for photo in photos]
-            await cache.set_value(self.cache, "geotagged_photos", photos)
+        if self.request.query.get("op") == "photos":
+            photos = await cache.get_value(self.cache, "geotagged_photos")
+            if not photos:
+                photos = await self.database.get_geotagged_photos()
+                photos = [dict(photo) for photo in photos]
+                await cache.set_value(self.cache, "geotagged_photos", photos)
+            return web.json_response(photos)
         # "session": self.session
-        context = {"photos": photos, "google_maps_key": self.config.GOOGLE_MAPS_KEY}
-        return aiohttp_jinja2.render_template("map.html", self.request, context=context)
+        return aiohttp_jinja2.render_template("map.html", self.request, context={})
 
 
 class Geo(BaseView):

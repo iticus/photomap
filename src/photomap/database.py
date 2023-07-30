@@ -289,8 +289,7 @@ class Database:
         :return: list of photos
         """
         conn = await self.pool.acquire()
-        query = """SELECT photo.id, ihash, lat, lng, altitude, extract(epoch from moment) as moment,
-                filename, size, make, model, width, height, photo.description
+        query = """SELECT photo.id, ihash, lat, lng, altitude, extract(epoch from moment)::bigint as moment
                 FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id
                 WHERE lat IS NOT NULL AND lng IS NOT NULL"""
         try:
