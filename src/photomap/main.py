@@ -11,10 +11,10 @@ from concurrent.futures import ProcessPoolExecutor
 
 import aiohttp_jinja2
 import jinja2
+import redis.asyncio as redis
 from aiohttp import web
 from aiohttp_session import setup
 from aiohttp_session.redis_storage import RedisStorage
-from redis import asyncio as aioredis  # type: ignore
 
 import settings
 import views
@@ -33,8 +33,7 @@ async def startup(app: web.Application) -> None:
     await app.database.connect()
     await app.database.create_structure()
     logger.info("connecting to REDIS instance")
-    redis_address = f"redis://{app.config.REDIS_HOST}:{app.config.REDIS_PORT}"
-    app.cache = await aioredis.from_url(redis_address)
+    app.cache = redis.Redis(host=app.config.REDIS_HOST, port=app.config.REDIS_PORT, password=app.config.REDIS_PASSWORD)
     await app.cache.ping()
     storage = RedisStorage(app.cache, max_age=86400)
     setup(app, storage)

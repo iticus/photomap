@@ -130,8 +130,7 @@ class Geo(BaseView):
             stop_dt = datetime.datetime.strptime(self.request.query.get("stop_filter", "2021-12-01"), "%Y-%m-%d")
             photos = await self.database.get_photos_nogps(start_dt, stop_dt)
             return web.json_response([dict(photo) for photo in photos])
-        context = {"google_maps_key": self.config.GOOGLE_MAPS_KEY}
-        return aiohttp_jinja2.render_template("geotag.html", self.request, context=context)
+        return aiohttp_jinja2.render_template("geotag.html", self.request, context={})
 
     async def post(self) -> web.Response:
         op = self.request.query.get("op")
