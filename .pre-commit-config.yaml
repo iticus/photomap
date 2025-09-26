@@ -44,7 +44,7 @@ repos:
     rev: "v1.18.2"
     hooks:
       - id: mypy
-        additional_dependencies: []
+        additional_dependencies: ["pydantic"]
 
   - repo: https://github.com/pycqa/pylint
     rev: "v3.3.8"

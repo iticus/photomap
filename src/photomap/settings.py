@@ -26,6 +26,9 @@ REDIS_HOST = "127.0.0.1"
 REDIS_PORT = 6379
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "password")
 
+# Google Login
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "client_id")
+
 # media settings
 MEDIA_PATH = os.getenv("MEDIA_PATH", "/media/data/work/photomap/media")
 

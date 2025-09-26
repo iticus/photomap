@@ -22,10 +22,10 @@ class Album:
     """
 
     album_id: int | None
-    start_moment: datetime.datetime = Field(None, title="Album earliest date")
-    stop_moment: datetime.datetime = Field(None, title="Album latest date")
-    name: str = Field(None, title="Album name", max_length=256)
-    description: str = Field(None, title="Album name", max_length=8192)
+    start_moment: datetime.datetime = Field(title="Album earliest date")
+    stop_moment: datetime.datetime = Field(title="Album latest date")
+    name: str = Field(title="Album name", max_length=256)
+    description: str = Field(title="Album name", max_length=8192)
 
 
 @dataclass
@@ -35,8 +35,8 @@ class Camera:
     """
 
     camera_id: int | None
-    make: str = Field(None, title="Camera make", max_length=256)
-    model: str = Field(None, title="Camera model", max_length=256)
+    make: str = Field(title="Camera make", max_length=256)
+    model: str = Field(title="Camera model", max_length=256)
 
 
 @dataclass
@@ -49,17 +49,17 @@ class Photo:  # pylint: disable=too-many-instance-attributes
     album: int | None
     camera: int | None
     moment: datetime.datetime
-    ihash: str = Field(None, title="Photo ihash (sha256)", max_length=64)
-    description: str = Field(None, title="Photo description", max_length=8192)
-    filename: str = Field(None, title="Original filename", max_length=64)
-    width: int = Field(None, title="Photo width (px)", gt=0, lt=64000)
-    height: int = Field(None, title="Photo height (px)", gt=0, lt=64000)
-    size: int = Field(None, title="Photo size (bytes)", gt=0, lt=10**9)  # 1 GB limit
+    ihash: str = Field(title="Photo ihash (sha256)", max_length=64)
+    description: str = Field(title="Photo description", max_length=8192)
+    filename: str = Field(title="Original filename", max_length=64)
+    width: int = Field(title="Photo width (px)", gt=0, lt=64000)
+    height: int = Field(title="Photo height (px)", gt=0, lt=64000)
+    size: int = Field(title="Photo size (bytes)", gt=0, lt=10**9)  # 1 GB limit
     lat: float | None = Field(None, title="Latitude (deg)", ge=-90, le=90)
     lng: float | None = Field(None, title="Longitude (deg)", ge=-180, le=180)
     altitude: float | None = Field(None, title="Altitude (m)", ge=0, le=12000)
-    gps_ref: str = Field(None, title="GPS reference (NE0)", min_length=3, max_length=3)
-    access: int = Field(None, title="Photo permissions (rw)", gt=0, lt=16)
+    gps_ref: str = Field(title="GPS reference (NE0)", min_length=3, max_length=3)
+    access: int = Field(title="Photo permissions (rw)", gt=0, lt=16)
     orientation: int = Field(1, title="Photo orientation (code)", ge=1, le=8)
 
 
@@ -70,7 +70,7 @@ class Tag:
     """
 
     tag_id: int
-    name: str = Field(None, title="Tag text", max_length=64)
+    name: str = Field(title="Tag text", max_length=64)
 
 
 class Database:

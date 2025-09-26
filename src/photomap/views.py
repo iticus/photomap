@@ -64,7 +64,8 @@ class Home(BaseView):
     """
 
     async def get(self) -> web.Response:
-        return aiohttp_jinja2.render_template("home.html", self.request, context={})
+        context = {"GOOGLE_CLIENT_ID": self.config.GOOGLE_CLIENT_ID}
+        return aiohttp_jinja2.render_template("home.html", self.request, context=context)
 
 
 class Login(BaseView):
