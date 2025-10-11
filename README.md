@@ -2,7 +2,7 @@
 
 ### About
 
-The aim of this project is to provide a way for users to view / manage their photos and albums on a map. I decided to create it while traveling in my home country (Romania). The project development started using [Django](https://www.djangoproject.com/) but has been recently ported to [Tornado](http://www.tornadoweb.org/en/stable/).
+The aim of this project is to provide a way for users to view / manage their photos and albums on a map. I decided to create it while traveling in my home country (Romania). The project development started using [Django](https://www.djangoproject.com/) but has been recently ported to [Tornado](http://www.tornadoweb.org/en/stable/) and then to [aiohttp](https://docs.aiohttp.org/en/stable/).
 Some functions (check screenshots below):
 
 - show all geo-tagged photos from the database on the map

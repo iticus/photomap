@@ -1,9 +1,0 @@
--c requirements.txt
-black
-isort
-flake8
-mypy
-pre-commit
-pytest
-pylint
-types-redis
