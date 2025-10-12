@@ -21,8 +21,7 @@ function showImage(photo) {
 }
 
 function generateInfoWindowContent(photo) {
-	let content = '<div class="row" style="width: 480px;">';
-	content += '<div class="col-md-6">';
+	let content = '<div class="col-md-6">';
 	content += '<table class="table table-sm table-striped table-hover" style="white-space:nowrap;">'
 	content += '<tr><td><b>Filename</b></td><td>' + photo.filename + '</td></tr>';
 	content += '<tr><td><b>Size</b></td><td>' + photo.size + ' bytes</td></tr>';
@@ -33,8 +32,12 @@ function generateInfoWindowContent(photo) {
 	content += '<tr><td><b><Date></Date></b></td><td>' + formatDatetime(dt) + '</td></tr>';
 	content += '<tr><td><b>Actions</b></td><td><span id="actions"></span></td></tr>';
 	content += '</table></div>'
-	content += '<div class="col-md-6 d-flex justify-content-center" id="popupImg" ></div></div></div>';
-	return content;
+	content += '<div class="col-md-6 d-flex justify-content-center" id="popupImg" ></div></div>';
+    const el = document.createElement("div");
+    el.classList.add("row");
+    el.innerHTML = content;
+    el.style.width = "480px";
+	return el;
 }
 
 function closeOverlayContainer() {

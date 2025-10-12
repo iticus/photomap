@@ -95,51 +95,60 @@ function loadPhotos() {
                 "text-size": 12
             }
         });
-//        for (const feature of geoData.features) {
-//            marker = createMarker(feature);
-//            let marker = new maplibregl.Marker([feature.geometry.coordinates[0], feature.geometry.coordinates[1]], {
-//                title: feature.properties.title,
-////                icon: L.icon({iconUrl: iconUrl}),
-//                image_id: feature.properties.id,
-//                // draggable: true
-//            });
-//            marker.on("click", function (layer) {
-//                fetch(`/photo?${new URLSearchParams({"photo_id": photo.id})}`, {method: "GET"})
-//                    .then(response => response.json())
-//                    .then(data => {
-//                        if (data.status === "ok") {
-//                            popup.setLatLng(point).setContent(generateInfoWindowContent(data.photo));
-//                            let img = document.createElement("img");
-//                            img.classList.add("rounded");
-//                            img.style.cursor = "pointer";
-//                            img.onclick = function () {
-//                                showImage(data.photo);
-//                            };
-//                            // if (data.photo.orientation != 1)
-//                            // 	img.style.transform = getRotation(data.photo.orientation);
-//                            img.src = "/media/thumbnails/192px/" + photo.ihash[0] + "/" + photo.ihash[1] + "/" + photo.ihash;
-//                            popup.openOn(map);
-//                            let popupImg = document.getElementById("popupImg");
-//                            popupImg.appendChild(img);
-//                            let sw = document.createElement("div");
-//                            sw.innerHTML = "<div class="form-check form-switch">\n" +
-//                                "  <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" />\n" +
-//                                "  <label class="form-check-label" for="flexSwitchCheckDefault">Move</label>\n" +
-//                                "</div>";
-//                            if (marker.dragging.enabled())
-//                                sw.getElementsByTagName("input")[0].checked = true;
-//                            sw.onclick = function () {
-//                                if (marker.dragging.enabled())
-//                                    marker.dragging.disable();
-//                                else
-//                                    marker.dragging.enable();
-//                            }
-//                            let actionsSpan = document.getElementById("actions");
-//                            actionsSpan.appendChild(sw);
-//                        } else
-//                            alert("Error: " + JSON.stringify(data));
-//                    })
-//                });
+
+        map.on("click", "photos", async (e) => {
+            const features = map.queryRenderedFeatures(e.point, {
+                layers: ["photos"]
+            });
+            const clusterId = features[0].properties.cluster_id;
+            const zoom = await map.getSource("photos").getClusterExpansionZoom(clusterId);
+            map.easeTo({
+                center: features[0].geometry.coordinates,
+                zoom
+            });
+        });
+
+        map.on("click", "unclustered-point", (e) => {
+            const feature = e.features[0];
+            const coordinates = feature.geometry.coordinates.slice();
+            let urlParams = new URLSearchParams({"photo_id": feature.properties.id});
+            fetch(`/photo?${urlParams}`, {method: "GET"})
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "ok") {
+                        popup.setLngLat(coordinates).setDOMContent(generateInfoWindowContent(data.photo));
+                        let img = document.createElement("img");
+                        img.classList.add("rounded");
+                        img.style.cursor = "pointer";
+                        img.onclick = function () {
+                            showImage(data.photo);
+                        };
+                        // if (data.photo.orientation != 1)
+                        // 	img.style.transform = getRotation(data.photo.orientation);
+                        img.src = "/media/thumbnails/192px/" + data.photo.ihash[0] + "/" + data.photo.ihash[1] + "/" + data.photo.ihash;
+                        popup.addTo(map);
+                        let popupImg = document.getElementById("popupImg");
+                        popupImg.appendChild(img);
+                        let sw = document.createElement("div");
+                        sw.innerHTML = '<div class="form-check form-switch">\n' +
+                            '  <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" />\n' +
+                            '  <label class="form-check-label" for="flexSwitchCheckDefault">Move</label>\n' +
+                            "</div>";
+                        if (marker.dragging.enabled())
+                            sw.getElementsByTagName("input")[0].checked = true;
+                        sw.onclick = function () {
+                            if (marker.dragging.enabled())
+                                marker.dragging.disable();
+                            else
+                                marker.dragging.enable();
+                        }
+                        let actionsSpan = document.getElementById("actions");
+                        actionsSpan.appendChild(sw);
+                    } else
+                        alert("Error: " + JSON.stringify(data));
+                })
+            });
+
 //                marker.on("dragend", function (e) {
 //                    let position = marker.getLatLng();
 //                    marker.setLatLng(position);
@@ -156,12 +165,8 @@ function loadPhotos() {
 //                        });
 //                });
 //            });
-//            markers.push(marker);
-//            markerCluster.addLayer(marker);
 //        };
         map.on("styleimagemissing", async(e) => {
-//            const response = await fetch(e.id);
-//            const imgData = await response.blob();
             if (loadedImages.has(e.id))
                 return;
             loadedImages.add(e.id);
@@ -169,20 +174,11 @@ function loadPhotos() {
             map.addImage(e.id, image.data);
         });
         map.fitBounds(bounds);
-//        map.addLayer(markerCluster);
-//        layerControl.addOverlay(markerCluster, "Photos");
-        // enableClustering();
     });
 
 }
 
 function initMap() {
-
-//    ""
-//    attribution: "ESRI Streets"
-//    ", {
-//    attribution: "ESRI Satellite"
-
     map = new maplibregl.Map({
         container: "map",
         center: [25, 45.5],
@@ -239,10 +235,7 @@ function initMap() {
     });
     map.addControl(new maplibregl.GlobeControl(), "top-right");
     map.addControl(new maplibregl.NavigationControl());
-    function onMapClick(e) {
-        popup.setLatLng(e.latlng).setContent(`click:${e.latlng.lat.toFixed(6)},${e.latlng.lng.toFixed(6)}`).openOn(map);
-    }
-    map.on("click", onMapClick);
+    popup = new maplibregl.Popup();
     loadPhotos();
 }
 
