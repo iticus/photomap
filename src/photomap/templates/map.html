@@ -5,9 +5,8 @@
     <link rel="stylesheet" type="text/css" href="/static/css/map.css" />
     <link rel="stylesheet" type="text/css" href="/static/css/MarkerCluster.css" />
     <link rel="stylesheet" type="text/css" href="/static/css/MarkerCluster.Default.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script type="text/javascript" src="/static/js/leaflet.markercluster.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.css" />
+    <script src="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
     <script type="text/javascript" src="/static/js/utils.js"></script>
     <script type="text/javascript" src="/static/js/map.js"></script>
 {% endblock %}
@@ -27,5 +26,5 @@
         </div>
       </div>
     </div>
-    <div id="mapCanvas" class="d-flex"></div>
+    <div id="map" class="d-flex"></div>
 {% endblock %}
