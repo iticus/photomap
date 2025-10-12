@@ -79,7 +79,7 @@ function loadPhotos() {
             filter: ["!", ["has", "point_count"]],
             layout: {
               "icon-image": ["get", "icon"], // the name of that image that you added
-              "icon-size": 0.5, // Size of the icon
+              "icon-size": 1.0, // Size of the icon
               "icon-allow-overlap": true,
             },
         });
@@ -134,14 +134,14 @@ function loadPhotos() {
                             '  <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" />\n' +
                             '  <label class="form-check-label" for="flexSwitchCheckDefault">Move</label>\n' +
                             "</div>";
-                        if (marker.dragging.enabled())
-                            sw.getElementsByTagName("input")[0].checked = true;
-                        sw.onclick = function () {
-                            if (marker.dragging.enabled())
-                                marker.dragging.disable();
-                            else
-                                marker.dragging.enable();
-                        }
+//                        if (marker.dragging.enabled())
+                        sw.getElementsByTagName("input")[0].checked = true;
+//                        sw.onclick = function () {
+//                            if (marker.dragging.enabled())
+//                                marker.dragging.disable();
+//                            else
+//                                marker.dragging.enable();
+//                        }
                         let actionsSpan = document.getElementById("actions");
                         actionsSpan.appendChild(sw);
                     } else
@@ -235,7 +235,7 @@ function initMap() {
     });
     map.addControl(new maplibregl.GlobeControl(), "top-right");
     map.addControl(new maplibregl.NavigationControl());
-    popup = new maplibregl.Popup();
+    popup = new maplibregl.Popup({maxWidth: "480px"});
     loadPhotos();
 }
 

@@ -47,7 +47,7 @@ async def shutdown(app: web.Application) -> None:
     logger.info("disconnecting from database")
     await app.database.disconnect()
     logger.info("disconnecting from redis")
-    await app.cache.close()
+    await app.cache.aclose()
     await asyncio.sleep(0.1)
 
 
