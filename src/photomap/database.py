@@ -283,7 +283,7 @@ class Database:
             await self.pool.release(conn)
         return photo
 
-    async def get_geotagged_photos(self) -> list[Photo]:
+    async def get_geotagged_photos(self, start: datetime.date, stop: datetime.date) -> list[Photo]:
         """
         Retrieve all existing photos from the database that have location information
         :return: list of photos
@@ -291,9 +291,9 @@ class Database:
         conn = await self.pool.acquire()
         query = """SELECT photo.id, ihash, lat, lng, altitude, extract(epoch from moment)::bigint as moment
                 FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id
-                WHERE lat IS NOT NULL AND lng IS NOT NULL"""
+                WHERE moment > $1 AND moment < $2 AND lat IS NOT NULL AND lng IS NOT NULL"""
         try:
-            photos = await conn.fetch(query)
+            photos = await conn.fetch(query, start, stop)
         finally:
             await self.pool.release(conn)
         return photos
@@ -417,6 +417,16 @@ class Database:
             )""",
             "CREATE INDEX IF NOT EXISTS tag_id_idx ON photo_tags USING btree(tag_id)",
             "CREATE INDEX IF NOT EXISTS tag_photo_id_idx ON photo_tags USING btree(photo_id)",
+            """CREATE TABLE IF NOT EXISTS users(
+                id serial PRIMARY KEY,
+                key text NOT NULL,
+                source text NOT NULL,
+                name text NOT NULL,
+                email text UNIQUE NOT NULL,
+                password text NOT NULL,
+                level smallint NOT NULL
+            )""",
+            "CREATE INDEX IF NOT EXISTS user_key_idx ON users USING btree(key);",
         ]
         conn = await self.pool.acquire()
         for query in queries:

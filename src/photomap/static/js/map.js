@@ -19,8 +19,21 @@ function createMarker(feature) {
 }
 
 function loadPhotos() {
+    if (map.getSource("photos")) {
+        if (map.getLayer("cluster-count"))
+            map.removeLayer("cluster-count");
+        map.removeLayer("unclustered-photos");
+        map.removeLayer("photos");
+        map.removeSource("photos");
+    }
     bounds = new maplibregl.LngLatBounds();
-    fetch("/map?op=photos").then(function (response) {
+    let startDate = document.getElementById("startDate");
+    let endDate = document.getElementById("endDate");
+    const params = new URLSearchParams();
+    params.append("op", "photos");
+    params.append("start_dt", startDate.value);
+    params.append("end_dt", endDate.value);
+    fetch(`/map?${params}`).then(function (response) {
         return response.json()
     }).then(function (photos) {
         let geoData = {"type": "FeatureCollection", "features": []};
@@ -73,13 +86,13 @@ function loadPhotos() {
         });
 
         map.addLayer({
-            id: "unclustered-point",
+            id: "unclustered-photos",
             type: "symbol",
             source: "photos",
             filter: ["!", ["has", "point_count"]],
             layout: {
               "icon-image": ["get", "icon"], // the name of that image that you added
-              "icon-size": 1.0, // Size of the icon
+              "icon-size": 0.8, // Size of the icon
               "icon-allow-overlap": true,
             },
         });
@@ -108,7 +121,7 @@ function loadPhotos() {
             });
         });
 
-        map.on("click", "unclustered-point", (e) => {
+        map.on("click", "unclustered-photos", (e) => {
             const feature = e.features[0];
             const coordinates = feature.geometry.coordinates.slice();
             let urlParams = new URLSearchParams({"photo_id": feature.properties.id});
@@ -191,26 +204,26 @@ function initMap() {
             },
             "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
             "sources": {
-                "satellite": {
-                    "tiles": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-                    "type": "raster"
-                },
-//                "streets": {
-//                    "tiles": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"],
+//                "satellite": {
+//                    "tiles": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
 //                    "type": "raster"
 //                },
+                "streets": {
+                    "tiles": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"],
+                    "type": "raster"
+                },
             },
             "layers": [
-//                {
-//                    "id": "ESRI Streets",
-//                    "type": "raster",
-//                    "source": "streets",
-//                },
                 {
-                    "id": "ESRI Satellite",
+                    "id": "ESRI Streets",
                     "type": "raster",
-                    "source": "satellite",
+                    "source": "streets",
                 },
+//                {
+//                    "id": "ESRI Satellite",
+//                    "type": "raster",
+//                    "source": "satellite",
+//                },
             ],
             "sky": {
                 "atmosphere-blend": [
@@ -222,10 +235,10 @@ function initMap() {
                     7, 0
                 ]
             },
-            "light": {
-                "anchor": "map",
-                "position": [1.5, 90, 80]
-            }
+//            "light": {
+//                "anchor": "map",
+//                "position": [1.5, 90, 80]
+//            }
         }
     });
     map.on("style.load", () => {
@@ -250,5 +263,13 @@ document.onkeydown = function (e) {
 };
 
 window.addEventListener("load", (event) => {
+    const startDate = document.getElementById("startDate");
+    const endDate = document.getElementById("endDate");
+    startDate.value='2023-01-01';
+    endDate.value='2025-01-01';
+    const btn = document.getElementById("showPhotos");
+    btn.addEventListener("click", function () {
+        loadPhotos();
+    });
     initMap();
 });

@@ -109,11 +109,13 @@ class Map(BaseView):
 
     async def get(self) -> web.Response:
         if self.request.query.get("op") == "photos":
-            photos = await cache.get_value(self.cache, "geotagged_photos")
-            if not photos:
-                photos = await self.database.get_geotagged_photos()
-                photos = [dict(photo) for photo in photos]
-                await cache.set_value(self.cache, "geotagged_photos", photos)
+            # photos = await cache.get_value(self.cache, "geotagged_photos")
+            # if not photos:
+            start_dt = datetime.datetime.strptime(self.request.query.get("start_dt"), "%Y-%m-%d").date()
+            end_dt = datetime.datetime.strptime(self.request.query.get("end_dt"), "%Y-%m-%d").date()
+            photos = await self.database.get_geotagged_photos(start_dt, end_dt)
+            photos = [dict(photo) for photo in photos]
+            # await cache.set_value(self.cache, "geotagged_photos", photos)
             return web.json_response(photos)
         # "session": self.session
         return aiohttp_jinja2.render_template("map.html", self.request, context={})
