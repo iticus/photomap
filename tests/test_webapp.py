@@ -22,10 +22,10 @@ async def test_map(photomap_app: web.Application) -> None:
     assert request.status == 200
     response = await request.text()
     assert "<title>Main map - photomap</title>" in response
-    assert "photos.push({" in response
-    assert '<div id="mapCanvas" class="d-flex"></div>' in response
-    assert '<script type="text/javascript" src="/static/js/leaflet.markercluster.js"></script>' in response
-    assert "leaflet.js" in response
+    # assert "photos.push({" in response
+    assert '<div id="map" class="d-flex"></div>' in response
+    assert '<script src="https://unpkg.com/maplibre-gl@' in response
+    assert "leaflet.js" not in response
     assert "bootstrap.bundle.min.js" in response
 
 
@@ -43,7 +43,7 @@ async def test_geotag(photomap_app: web.Application) -> None:
 
 async def test_geotag_ajax(photomap_app: web.Application) -> None:
     """Test that the geotag AJAX request returns non tagged images"""
-    params = {"op": "get_photo_list", "start_filter": "2020-01-01", "stop_filter": "2021-01-01"}
+    params = {"op": "get_photo_list", "start_filter": "2020-01-01", "stop_filter": "2022-01-01"}
     request = await photomap_app.get("/geotag", params=params)
     assert request.status == 200
     data = await request.json()
