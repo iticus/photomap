@@ -359,6 +359,38 @@ class Database:
             await self.pool.release(conn)
         return stats
 
+    async def get_user_by_key(self, key: str, source: str) -> dict | None:
+        """
+        Return first user matching username
+        :param key: user key to search for
+        :param source: source to filter by (local, google)
+        :return user
+        """
+        conn = await self.pool.acquire()
+        query = "SELECT key,name,username,password FROM users WHERE key=$1 AND source=$2"
+        try:
+            user = await conn.fetchrow(query, key, source)
+        finally:
+            await self.pool.release(conn)
+        return user
+
+    async def add_user(self, key: str, source: str, name: str, email: str, username: str, password: str) -> None:
+        """
+        Add new user to database
+        :param key: user key (id for Google accounts, username for local account)
+        :param source: source to filter by (local, google)
+        :param name: full name for the new user
+        :param email: email address
+        :param username: username (email for Google accounts)
+        :param password: user password (empty for Google accounts)
+        """
+        conn = await self.pool.acquire()
+        query = "INSERT INTO users(key,source,name,email,username,password,level) VALUES($1,$2,$3,$4,$5,$6,$7)"
+        try:
+            await conn.fetchrow(query, key,source, name, email, username, password, 1)
+        finally:
+            await self.pool.release(conn)
+
     async def create_structure(self) -> None:
         """
         Ensure table and index structure exists
@@ -419,11 +451,12 @@ class Database:
             "CREATE INDEX IF NOT EXISTS tag_photo_id_idx ON photo_tags USING btree(photo_id)",
             """CREATE TABLE IF NOT EXISTS users(
                 id serial PRIMARY KEY,
-                key text NOT NULL,
+                key text UNIQUE NOT NULL,
                 source text NOT NULL,
                 name text NOT NULL,
                 email text UNIQUE NOT NULL,
-                password text NOT NULL,
+                username text UNIQUE NOT NULL,
+                password text,
                 level smallint NOT NULL
             )""",
             "CREATE INDEX IF NOT EXISTS user_key_idx ON users USING btree(key);",

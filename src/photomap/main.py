@@ -35,7 +35,7 @@ async def startup(app: web.Application) -> None:
     logger.info("connecting to REDIS instance")
     app.cache = redis.Redis(host=app.config.REDIS_HOST, port=app.config.REDIS_PORT, password=app.config.REDIS_PASSWORD)
     await app.cache.ping()
-    storage = RedisStorage(app.cache, max_age=86400)
+    storage = RedisStorage(app.cache, max_age=14*86400)
     setup(app, storage)
 
 

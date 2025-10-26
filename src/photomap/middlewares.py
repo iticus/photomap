@@ -9,6 +9,7 @@ from typing import Callable
 
 import aiohttp_jinja2
 from aiohttp import web, web_exceptions
+from multidict import CIMultiDict
 
 # from aiohttp_session import get_session
 
@@ -24,6 +25,10 @@ async def error_middleware(request: web.Request, handler: Callable) -> web.Respo
     :return: web response object
     """
     try:
+        if "g_state" in request.headers.get("Cookie", ""):
+            headers = dict(request.headers)  # fixes: https://github.com/python/cpython/issues/92936
+            headers["Cookie"] = headers["Cookie"].replace('"', "")
+            request = request.clone(headers=CIMultiDict(headers))
         response = await handler(request)
         if response.status != 500:
             return response

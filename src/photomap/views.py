@@ -43,7 +43,7 @@ class BaseView(web.View):
 
         async def wrapped(self: web.Request, *args: Any, **kwargs: Any) -> Any:
             self.session = await get_session(self.request)
-            if "email" not in self.session:
+            if "username" not in self.session:
                 next_url = self.request.rel_url or "/"
                 return web.HTTPFound(f"/login?next={next_url}")
             result = await func(self, *args, **kwargs)
@@ -63,8 +63,9 @@ class Home(BaseView):
     Main view for /
     """
 
+    @BaseView.authenticated
     async def get(self) -> web.Response:
-        context = {"GOOGLE_CLIENT_ID": self.config.GOOGLE_CLIENT_ID}
+        context = {"session": self.session}
         return aiohttp_jinja2.render_template("home.html", self.request, context=context)
 
 
@@ -74,20 +75,28 @@ class Login(BaseView):
     async def get(self) -> web.Response:
         message = self.request.query.get("message")
         next_url = self.request.query.get("next", "/")
-        context = {"message": message, "next_url": next_url}
+        context = {"message": message, "next_url": next_url, "GOOGLE_CLIENT_ID": self.config.GOOGLE_CLIENT_ID}
         return aiohttp_jinja2.render_template("login.html", self.request, context=context)
 
     async def post(self) -> web.Response:
         data = await self.request.post()
-        if not data.get("email") or not data.get("password"):
-            return web.HTTPFound(location="/login?message=provide email and password")
-        user = self.database.get_user_by_email(data["email"])
+        if data.get("source") == "google":
+            #TODO: validate token
+            # jwt.decode(id_token, certs=certs, audience=audience)
+            user = await self.database.get_user_by_key(data["key"], "google")
+            if not user:
+                await self.database.add_user(data["key"], "google", data["name"], data["email"], data["email"], None)
+                user = {"username": data["email"]}
+        elif data.get("username") and data.get("password"):
+            user = await self.database.get_user_by_key(data["username"], "local")
+            if not user:
+                return web.HTTPFound(location="/login?message=no such user found")
+            if not security.compare_pwhash(user["password"], data["password"]):
+                return web.HTTPFound(location="/login?message=invalid password")
         if not user:
-            return web.HTTPFound(location="/login?message=no such user found")
-        if not security.compare_pwhash(user["password"], data["password"]):
-            return web.HTTPFound(location="/login?message=invalid password")
+            return web.HTTPFound(location="/login?message=provide username and password")
         session = await new_session(self.request)
-        session["email"] = user["email"]
+        session["username"] = user["username"]
         next_url = self.request.query.get("next", "/")
         return web.HTTPFound(next_url)
 
@@ -107,6 +116,7 @@ class Map(BaseView):
     Main view for /map (main map)
     """
 
+    @BaseView.authenticated
     async def get(self) -> web.Response:
         if self.request.query.get("op") == "photos":
             # photos = await cache.get_value(self.cache, "geotagged_photos")
@@ -117,8 +127,7 @@ class Map(BaseView):
             photos = [dict(photo) for photo in photos]
             # await cache.set_value(self.cache, "geotagged_photos", photos)
             return web.json_response(photos)
-        # "session": self.session
-        return aiohttp_jinja2.render_template("map.html", self.request, context={})
+        return aiohttp_jinja2.render_template("map.html", self.request, context={"session": self.session})
 
 
 class Geo(BaseView):
@@ -126,6 +135,7 @@ class Geo(BaseView):
     View for manually geotagging photos (/geotag)
     """
 
+    @BaseView.authenticated
     async def get(self) -> web.Response:
         op = self.request.query.get("op")
         if op == "get_photo_list":
@@ -133,8 +143,9 @@ class Geo(BaseView):
             stop_dt = datetime.datetime.strptime(self.request.query.get("stop_filter", "2021-12-01"), "%Y-%m-%d")
             photos = await self.database.get_photos_nogps(start_dt, stop_dt)
             return web.json_response([dict(photo) for photo in photos])
-        return aiohttp_jinja2.render_template("geotag.html", self.request, context={})
+        return aiohttp_jinja2.render_template("geotag.html", self.request, context={"session": self.session})
 
+    @BaseView.authenticated
     async def post(self) -> web.Response:
         op = self.request.query.get("op")
         if op == "update_location":
@@ -160,6 +171,7 @@ class Photo(BaseView):
     View for retrieving photo details
     """
 
+    @BaseView.authenticated
     async def get(self) -> web.Response:
         photo_id = self.request.query.get("photo_id")
         if not photo_id or not photo_id.isdigit():
@@ -175,9 +187,11 @@ class Upload(BaseView):
     Handler for uploading pictures (manually or via import script)
     """
 
+    @BaseView.authenticated
     async def get(self) -> web.Response:
-        return aiohttp_jinja2.render_template("upload.html", self.request, context={})
+        return aiohttp_jinja2.render_template("upload.html", self.request, context={"session": self.session})
 
+    @BaseView.authenticated
     async def post(self) -> web.Response:
         secret = self.request.headers.get("Authentication", "")
         if secret != self.config.SECRET:
@@ -248,6 +262,7 @@ class Stats(BaseView):
     Handler for rendering photo stats
     """
 
+    @BaseView.authenticated
     async def get(self) -> web.Response:
         op = self.request.query.get("op")
         if op == "get_stats":
@@ -257,7 +272,7 @@ class Stats(BaseView):
                 stats = [dict(stat) for stat in stats]
                 await cache.set_value(self.cache, "stats", stats)
             return web.json_response(stats)
-        return aiohttp_jinja2.render_template("stats.html", self.request, context={})
+        return aiohttp_jinja2.render_template("stats.html", self.request, context={"session": self.session})
 
 
 class About(BaseView):
