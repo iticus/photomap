@@ -18,7 +18,7 @@ function createMarker(feature) {
     return marker;
 }
 
-function loadPhotos() {
+function filterPhotos() {
     if (map.getSource("photos")) {
         if (map.getLayer("cluster-count"))
             map.removeLayer("cluster-count");
@@ -249,7 +249,7 @@ function initMap() {
     map.addControl(new maplibregl.GlobeControl(), "top-right");
     map.addControl(new maplibregl.NavigationControl());
     popup = new maplibregl.Popup({maxWidth: "480px"});
-    loadPhotos();
+    filterPhotos();
 }
 
 document.onkeydown = function (e) {
@@ -263,13 +263,7 @@ document.onkeydown = function (e) {
 };
 
 window.addEventListener("load", (event) => {
-    const startDate = document.getElementById("startDate");
-    const endDate = document.getElementById("endDate");
-    startDate.value='2023-01-01';
-    endDate.value='2025-01-01';
-    const btn = document.getElementById("showPhotos");
-    btn.addEventListener("click", function () {
-        loadPhotos();
-    });
+	document.getElementById("startDate").value = "2023-01-01";
+	document.getElementById("endDate").value = "2024-01-01";
     initMap();
 });

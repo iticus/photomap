@@ -15,3 +15,11 @@ html, body {
     cursor: pointer;
     padding: 0;
 }
+
+button#filterButton {
+    position: fixed;
+    right: 80px;
+    top: 60px;
+    width: 120px;
+    z-index: 500;
+}

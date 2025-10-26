@@ -307,7 +307,7 @@ class Database:
         query = """SELECT photo.id, ihash, extract(epoch from moment)::bigint as moment, filename, size,
                 make, model, width, height, photo.description
                 FROM photo LEFT OUTER JOIN camera on photo.camera_id = camera.id
-                WHERE (lat IS NULL OR lng IS NULL) AND moment BETWEEN $1 AND $2 ORDER BY moment ASC LIMIT 30"""
+                WHERE (lat IS NULL OR lng IS NULL) AND moment BETWEEN $1 AND $2 ORDER BY moment ASC LIMIT 25"""
         try:
             photos = await conn.fetch(query, start_moment, stop_moment)
         finally:

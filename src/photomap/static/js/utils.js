@@ -46,3 +46,4 @@ function closeOverlayContainer() {
 		infoWindow.close();
 	}
 }
+

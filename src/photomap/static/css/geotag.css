@@ -6,14 +6,19 @@ html, body   {
 
 div#photoList {
     position: fixed;
-    left: 80px;
-    right: 80px;
+    width: auto;
+/*    left: 50%;*/
+/*    margin-left: -40%;*/
+    left: 50%;
+    transform: translate(-50%);
+    padding-left: 0px;
     bottom: 20px;
     height: 48px;
     font-size: 12px;
     background-color: rgba(0, 0, 0, 0.2);
     z-index: 500;
 	overflow: hidden;
+    border-radius: 5px;
 }
 
 button#filterButton {
@@ -31,6 +36,7 @@ button#filterButton {
 	margin-left: 12px;
 	margin-top: 3px;
 	z-index: 16;
+    border-radius: 5px;
 }
 
 #form input, textarea, select, button {

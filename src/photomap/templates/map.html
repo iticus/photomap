@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros.html" import mainFilter %}
 {% block title %}Main map - photomap{% endblock %}
 {% block head %}
     {{ super() }}
@@ -25,29 +26,7 @@
       </div>
     </div>
     <div id="map" class="d-flex"></div>
-
-    <div id="filter" style="position: absolute; left: 50px; top: 100px; z-index: 888">
-        <p class="d-inline-flex gap-1">
-          <a class="btn btn-primary" data-bs-toggle="collapse" href="#collapseFilter" role="button" aria-expanded="false" aria-controls="collapseFilter">
-          Filter
-          </a>
-        </p>
-        <div class="collapse" id="collapseFilter">
-            <div class="card card-body" style="width: 320px;">
-                <div class="row justify-content-center">
-                    <div>
-                        <label for="startDate">Start</label>
-                        <input id="startDate" class="form-control" type="date" />
-                    </div>
-                    <div>
-                        <label for="endDate">End</label>
-                        <input id="endDate" class="form-control" type="date" />
-                    </div>
-                    <div>
-                        <button type="button" class="btn btn-primary" id="showPhotos">Show photos</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    {{ mainFilter() }}
+    <button type="button" class="btn btn-primary" id="filterButton" data-bs-toggle="modal"
+        data-bs-target="#filterModal">Filter</button>
 {% endblock %}

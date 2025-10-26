@@ -34,8 +34,8 @@ function filterPhotos(){
 	let data = {
 		"op": "get_photo_list",
 		"album_filter": document.getElementById("album").value,
-		"start_filter": document.getElementById("fromDate").value,
-		"stop_filter": document.getElementById("toDate").value
+		"start_filter": document.getElementById("startDate").value,
+		"stop_filter": document.getElementById("endDate").value
 	}
 	url.search = new URLSearchParams(data).toString();
 	fetch(url, {method: "GET"})
@@ -82,8 +82,8 @@ function initMap() {
 		popup.setLatLng(e.latlng).setContent(`You clicked the map at ${e.latlng.toString()}`).openOn(map);
 	}
 	let layerControl = L.control.layers(baseMaps).addTo(map);
-	document.getElementById("fromDate").value = "2020-01-01";
-	document.getElementById("toDate").value = "2021-01-01";
+	document.getElementById("startDate").value = "2020-01-01";
+	document.getElementById("endDate").value = "2023-01-01";
 
 	filterPhotos();
 }

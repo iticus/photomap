@@ -1,0 +1,62 @@
+{% macro mainFilter() %}
+    <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalTitle"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalTitle">Filter images for manual geotagging</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="filterModalBody">
+                    <form>
+                        <div class="form-group mt-2">
+                            <label for="album">Album</label>
+                            <input type="text" class="form-control" id="album" placeholder="Album" disabled>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="tags">Tags</label>
+                            <input type="text" class="form-control" id="tags" placeholder="Input some tags" disabled>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="description">Description</label>
+                            <input type="text" class="form-control" id="description" placeholder="Input description keywords" disabled>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="startDate">From date</label>
+                            <input type="date" class="form-control" id="startDate" placeholder="Start date">
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="endDate">To date</label>
+                            <input type="date" class="form-control" id="endDate" placeholder="Stop date">
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="camera">Camera</label>
+                            <input type="text" class="form-control" id="camera" placeholder="Input camera keywords" disabled>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" class="form-check-input" id="clusterToggle" disabled>
+                            <label class="form-check-label" for="clusterToggle">Toggle Clustering</label>
+                        </div>
+                    </form>
+                    <!--
+                    <div>
+                        <div>
+                            Position
+                            <div>
+                                Start <input type="text" title="Input start latitude" id="start_lat" value=""> -
+                                <input type="text" title="Input start longitude" id="start_lng" value=""> <br/>
+                                Stop <input type="text" title="Input stop latitude" id="stop_lat" value=""> -
+                                <input type="text" title="Input stop longitude" id="stop_lng" value="">
+                            </div>
+                        </div>
+                    </div>
+                    -->
+                </div>
+                <div class="modal-footer">
+                    <button name="button" class="btn btn-success" onClick="filterPhotos()">Filter</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
