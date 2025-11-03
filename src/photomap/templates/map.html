@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros.html" import mainFilter %}
+{% from "macros.html" import showGallery %}
 {% block title %}Main map - photomap{% endblock %}
 {% block head %}
     {{ super() }}
@@ -27,6 +28,8 @@
     </div>
     <div id="map" class="d-flex"></div>
     {{ mainFilter() }}
+    {{ showGallery() }}
     <button type="button" class="btn btn-primary" id="filterButton" data-bs-toggle="modal"
         data-bs-target="#filterModal">Filter</button>
+    <button type="button" class="btn btn-success" id="galleryButton" onclick="javascript:showGallery()">Gallery</button>
 {% endblock %}

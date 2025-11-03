@@ -387,7 +387,7 @@ class Database:
         conn = await self.pool.acquire()
         query = "INSERT INTO users(key,source,name,email,username,password,level) VALUES($1,$2,$3,$4,$5,$6,$7)"
         try:
-            await conn.fetchrow(query, key,source, name, email, username, password, 1)
+            await conn.fetchrow(query, key, source, name, email, username, password, 1)
         finally:
             await self.pool.release(conn)
 

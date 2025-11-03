@@ -81,7 +81,7 @@ class Login(BaseView):
     async def post(self) -> web.Response:
         data = await self.request.post()
         if data.get("source") == "google":
-            #TODO: validate token
+            # TODO: validate token
             # jwt.decode(id_token, certs=certs, audience=audience)
             user = await self.database.get_user_by_key(data["key"], "google")
             if not user:

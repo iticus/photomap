@@ -1,6 +1,7 @@
 let map;
 let bounds;
 let popup = null;
+let geoData = [];
 let loadedImages = new Set();
 
 function createMarker(feature) {
@@ -16,6 +17,24 @@ function createMarker(feature) {
         .setLngLat(feature.geometry.coordinates)
         .addTo(map);
     return marker;
+}
+
+function showGallery() {
+    const viewportBounds = map.getBounds();
+    let content = "<div>";
+    for (const img of geoData.features) {
+        if (viewportBounds.contains(img.geometry.coordinates)) {
+            let ihash = img.properties.icon.split("/").slice(-1)[0];
+            content += '<img id="dynamicImage" style="max-width: 100%; height: auto" src="/media/thumbnails/192px/'+
+			    ihash[0] + '/' + ihash[1] + '/' + ihash + '">';
+        }
+    }
+    content += "</div>";
+	document.getElementById("galleryModalBody").innerHTML = content;
+	// if (photo.orientation != 1)
+	// 	document.getElementById("dynamicImage").style.transform = getRotation(photo.orientation);
+	const myModal = new bootstrap.Modal(document.getElementById("galleryModal"), {});
+	myModal.show();
 }
 
 function filterPhotos() {
@@ -36,7 +55,7 @@ function filterPhotos() {
     fetch(`/map?${params}`).then(function (response) {
         return response.json()
     }).then(function (photos) {
-        let geoData = {"type": "FeatureCollection", "features": []};
+        geoData = {"type": "FeatureCollection", "features": []};
         photos.forEach((photo) => {
             let iconUrl = "/media/thumbnails/64px/" + photo.ihash[0] + "/" + photo.ihash[1] + "/" + photo.ihash;
             bounds.extend([photo.lng, photo.lat]);
@@ -133,6 +152,7 @@ function filterPhotos() {
                         let img = document.createElement("img");
                         img.classList.add("rounded");
                         img.style.cursor = "pointer";
+                        img.style.transform = "scale(0.75, 0.75)";
                         img.onclick = function () {
                             showImage(data.photo);
                         };
