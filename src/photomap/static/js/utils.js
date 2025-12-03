@@ -8,7 +8,12 @@ function formatDatetime(moment){
     return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 
-function showImage(photo) {
+function showImage(photo, fromModal = false) {
+    const galleryModal = document.getElementById("galleryModal");
+    if (fromModal === true) {
+        bootstrap.Modal.getInstance(galleryModal).hide();
+        window.modalState = true;
+    }
 	let title = `${photo.filename}, taken on ${formatDatetime(new Date(photo.moment * 1000))} with ${photo.make} ${photo.model}`;
 	document.getElementById("photoModalTitle").innerHTML = title;
 	let img = '<img id="dynamicImage" style="max-width: 100%; height: auto" src="/media/thumbnails/960px/'+
@@ -16,8 +21,8 @@ function showImage(photo) {
 	document.getElementById("photoModalBody").innerHTML = img;
 	// if (photo.orientation != 1)
 	// 	document.getElementById("dynamicImage").style.transform = getRotation(photo.orientation);
-	const myModal = new bootstrap.Modal(document.getElementById("photoModal"), {});
-	myModal.show();
+	const photoModal = new bootstrap.Modal(document.getElementById("photoModal"), {});
+	photoModal.show();
 }
 
 function generateInfoWindowContent(photo) {

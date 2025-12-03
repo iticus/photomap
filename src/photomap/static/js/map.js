@@ -3,6 +3,7 @@ let bounds;
 let popup = null;
 let geoData = [];
 let loadedImages = new Set();
+window.modalState = false;
 
 function createMarker(feature) {
     const el = document.createElement("div");
@@ -19,28 +20,47 @@ function createMarker(feature) {
     return marker;
 }
 
+function pullPhotoData(photoId) {
+    let urlParams = new URLSearchParams({"photo_id": photoId});
+    fetch(`/photo?${urlParams}`, {method: "GET"})
+        .then(response => response.json())
+        .then(data => {
+        if (data.status === "ok") {
+            showImage(data.photo, true);
+        }
+        else {
+            alert("invalid photo response " + data);
+        }
+    })
+        .catch((error) => {
+        alert("cannot get image details " + error);
+    });
+}
+
 function showGallery() {
     const viewportBounds = map.getBounds();
     let content = "<div>";
     for (const img of geoData.features) {
         if (viewportBounds.contains(img.geometry.coordinates)) {
             let ihash = img.properties.icon.split("/").slice(-1)[0];
+            content += '<div class="wrapper"><div class="box box1">';
             content += '<img id="dynamicImage" style="max-width: 100%; height: auto" src="/media/thumbnails/192px/'+
-			    ihash[0] + '/' + ihash[1] + '/' + ihash + '">';
+            ihash[0] + '/' + ihash[1] + '/' + ihash + '" onclick="javascript:pullPhotoData(' + img.properties.id + ')">';
+            content += "</div></div>";
         }
     }
     content += "</div>";
-	document.getElementById("galleryModalBody").innerHTML = content;
-	// if (photo.orientation != 1)
-	// 	document.getElementById("dynamicImage").style.transform = getRotation(photo.orientation);
-	const myModal = new bootstrap.Modal(document.getElementById("galleryModal"), {});
-	myModal.show();
+    document.getElementById("galleryModalBody").innerHTML = content;
+    // if (photo.orientation != 1)
+    // 	document.getElementById("dynamicImage").style.transform = getRotation(photo.orientation);
+    const myModal = new bootstrap.Modal(document.getElementById("galleryModal"), {});
+    myModal.show();
 }
 
 function filterPhotos() {
     if (map.getSource("photos")) {
         if (map.getLayer("cluster-count"))
-            map.removeLayer("cluster-count");
+        map.removeLayer("cluster-count");
         map.removeLayer("unclustered-photos");
         map.removeLayer("photos");
         map.removeSource("photos");
@@ -110,9 +130,9 @@ function filterPhotos() {
             source: "photos",
             filter: ["!", ["has", "point_count"]],
             layout: {
-              "icon-image": ["get", "icon"], // the name of that image that you added
-              "icon-size": 0.8, // Size of the icon
-              "icon-allow-overlap": true,
+                "icon-image": ["get", "icon"], // the name of that image that you added
+                "icon-size": 0.8, // Size of the icon
+                "icon-allow-overlap": true,
             },
         });
 
@@ -147,61 +167,61 @@ function filterPhotos() {
             fetch(`/photo?${urlParams}`, {method: "GET"})
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === "ok") {
-                        popup.setLngLat(coordinates).setDOMContent(generateInfoWindowContent(data.photo));
-                        let img = document.createElement("img");
-                        img.classList.add("rounded");
-                        img.style.cursor = "pointer";
-                        img.style.transform = "scale(0.75, 0.75)";
-                        img.onclick = function () {
-                            showImage(data.photo);
-                        };
-                        // if (data.photo.orientation != 1)
-                        // 	img.style.transform = getRotation(data.photo.orientation);
-                        img.src = "/media/thumbnails/192px/" + data.photo.ihash[0] + "/" + data.photo.ihash[1] + "/" + data.photo.ihash;
-                        popup.addTo(map);
-                        let popupImg = document.getElementById("popupImg");
-                        popupImg.appendChild(img);
-                        let sw = document.createElement("div");
-                        sw.innerHTML = '<div class="form-check form-switch">\n' +
-                            '  <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" />\n' +
-                            '  <label class="form-check-label" for="flexSwitchCheckDefault">Move</label>\n' +
-                            "</div>";
-//                        if (marker.dragging.enabled())
-                        sw.getElementsByTagName("input")[0].checked = true;
-//                        sw.onclick = function () {
-//                            if (marker.dragging.enabled())
-//                                marker.dragging.disable();
-//                            else
-//                                marker.dragging.enable();
-//                        }
-                        let actionsSpan = document.getElementById("actions");
-                        actionsSpan.appendChild(sw);
-                    } else
-                        alert("Error: " + JSON.stringify(data));
-                })
-            });
+                if (data.status === "ok") {
+                    popup.setLngLat(coordinates).setDOMContent(generateInfoWindowContent(data.photo));
+                    let img = document.createElement("img");
+                    img.classList.add("rounded");
+                    img.style.cursor = "pointer";
+                    img.style.transform = "scale(0.75, 0.75)";
+                    img.onclick = function () {
+                        showImage(data.photo);
+                    };
+                    // if (data.photo.orientation != 1)
+                    // 	img.style.transform = getRotation(data.photo.orientation);
+                    img.src = "/media/thumbnails/192px/" + data.photo.ihash[0] + "/" + data.photo.ihash[1] + "/" + data.photo.ihash;
+                    popup.addTo(map);
+                    let popupImg = document.getElementById("popupImg");
+                    popupImg.appendChild(img);
+                    let sw = document.createElement("div");
+                    sw.innerHTML = '<div class="form-check form-switch">\n' +
+                    '  <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" />\n' +
+                    '  <label class="form-check-label" for="flexSwitchCheckDefault">Move</label>\n' +
+                    "</div>";
+                    //                        if (marker.dragging.enabled())
+                    sw.getElementsByTagName("input")[0].checked = true;
+                    //                        sw.onclick = function () {
+                    //                            if (marker.dragging.enabled())
+                    //                                marker.dragging.disable();
+                    //                            else
+                    //                                marker.dragging.enable();
+                    //                        }
+                    let actionsSpan = document.getElementById("actions");
+                    actionsSpan.appendChild(sw);
+                } else
+                alert("Error: " + JSON.stringify(data));
+            })
+        });
 
-//                marker.on("dragend", function (e) {
-//                    let position = marker.getLatLng();
-//                    marker.setLatLng(position);
-//                    popup.setLatLng(position);
-//                    let postData = {"id": photo.id, "hash": photo.ihash, "lat": position.lat, "lng": position.lng};
-//                    let headers = {"Content-Type": "application/json"};
-//                    let url = new URL("/geotag", window.location.origin);
-//                    url.search = new URLSearchParams({"op": "update_location"}).toString();
-//                    fetch(url, {method: "POST", headers: headers, body: JSON.stringify(postData)})
-//                        .then(response => response.json())
-//                        .then(data => {
-//                            if (data.status !== "ok")
-//                                alert("Cannot update position: " + JSON.stringify(data));
-//                        });
-//                });
-//            });
-//        };
+        //                marker.on("dragend", function (e) {
+        //                    let position = marker.getLatLng();
+        //                    marker.setLatLng(position);
+        //                    popup.setLatLng(position);
+        //                    let postData = {"id": photo.id, "hash": photo.ihash, "lat": position.lat, "lng": position.lng};
+        //                    let headers = {"Content-Type": "application/json"};
+        //                    let url = new URL("/geotag", window.location.origin);
+        //                    url.search = new URLSearchParams({"op": "update_location"}).toString();
+        //                    fetch(url, {method: "POST", headers: headers, body: JSON.stringify(postData)})
+        //                        .then(response => response.json())
+        //                        .then(data => {
+        //                            if (data.status !== "ok")
+        //                                alert("Cannot update position: " + JSON.stringify(data));
+        //                        });
+        //                });
+        //            });
+        //        };
         map.on("styleimagemissing", async(e) => {
             if (loadedImages.has(e.id))
-                return;
+            return;
             loadedImages.add(e.id);
             const image = await map.loadImage(e.id);
             map.addImage(e.id, image.data);
@@ -224,10 +244,10 @@ function initMap() {
             },
             "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
             "sources": {
-//                "satellite": {
-//                    "tiles": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-//                    "type": "raster"
-//                },
+                //                "satellite": {
+                //                    "tiles": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+                //                    "type": "raster"
+                //                },
                 "streets": {
                     "tiles": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"],
                     "type": "raster"
@@ -239,11 +259,11 @@ function initMap() {
                     "type": "raster",
                     "source": "streets",
                 },
-//                {
-//                    "id": "ESRI Satellite",
-//                    "type": "raster",
-//                    "source": "satellite",
-//                },
+                //                {
+                //                    "id": "ESRI Satellite",
+                //                    "type": "raster",
+                //                    "source": "satellite",
+                //                },
             ],
             "sky": {
                 "atmosphere-blend": [
@@ -255,10 +275,10 @@ function initMap() {
                     7, 0
                 ]
             },
-//            "light": {
-//                "anchor": "map",
-//                "position": [1.5, 90, 80]
-//            }
+            //            "light": {
+            //                "anchor": "map",
+            //                "position": [1.5, 90, 80]
+            //            }
         }
     });
     map.on("style.load", () => {
@@ -277,13 +297,22 @@ document.onkeydown = function (e) {
         closeOverlayContainer();
     }
     if (e.code === "90")
-        map.fitBounds(bounds);
+    map.fitBounds(bounds);
     if (e.code === "79")
-        toggleOptionsPane();
+    toggleOptionsPane();
 };
 
 window.addEventListener("load", (event) => {
-	document.getElementById("startDate").value = "2023-01-01";
-	document.getElementById("endDate").value = "2024-01-01";
+    document.getElementById("startDate").value = "2023-01-01";
+    document.getElementById("endDate").value = "2024-01-01";
     initMap();
+
+    const photoModal = document.getElementById("photoModal");
+    photoModal.addEventListener("hide.bs.modal", event => {
+        if (window.modalState === true) {
+            const myModal = new bootstrap.Modal(document.getElementById("galleryModal"), {});
+            myModal.show();
+            window.modalState = false;
+        }
+    })
 });
