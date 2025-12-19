@@ -28,6 +28,7 @@ REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "password")
 
 # Google Login
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "client_id")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "client_secret")
 
 # media settings
 MEDIA_PATH = os.getenv("MEDIA_PATH", "/media/data/work/photomap/media")

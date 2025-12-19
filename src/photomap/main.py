@@ -60,6 +60,7 @@ def make_app() -> web.Application:
     app.router.add_view("/", views.Home)
     app.router.add_view("/map{tail:.*?}", views.Map)
     app.router.add_view("/login{tail:.*?}", views.Login)
+    app.router.add_view("/authorization{tail:.*?}", views.Authorization)
     app.router.add_view("/logout{tail:.*?}", views.Logout)
     app.router.add_view("/geotag{tail:.*?}", views.Geo)
     app.router.add_view("/photo{tail:.*?}", views.Photo)

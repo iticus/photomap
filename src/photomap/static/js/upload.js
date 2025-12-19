@@ -21,10 +21,12 @@ function sendFile(file, secret) {
     xhr.setRequestHeader("Authentication", secret);
     xhr.onreadystatechange = () => {
         if (xhr.readyState === 4) {
-            if (xhr.status === 200)
+            if (xhr.status === 200) {
                 imported += 1;
-            else if (xhr.status === 409)
+            }
+            else if (xhr.status === 409) {
                 duplicates += 1;
+            }
             else {
                 failed += 1;
                 document.getElementById("errorContent").innerHTML += file.name + " -> " +  xhr.responseText + "<br>";
@@ -52,16 +54,18 @@ function initUpload() {
         bar.style.width = "0%";
         bar.innerText = "0%";
         for (const file of uploadInput.files) {
-            if (!file.type.startsWith("image"))
+            if (!file.type.startsWith("image")) {
                 continue
+            }
             fileCount += 1;
             totalSize += file.size;
         }
         let secret = document.getElementById("secret").value;
         // document.getElementById("totals").innerHTML = `Uploading ${fileCount} files of ${totalSize} bytes`;
         for (const file of uploadInput.files) {
-            if (!file.type.startsWith("image"))
+            if (!file.type.startsWith("image")) {
                 continue
+            }
             sendFile(file, secret);
         }
 
@@ -69,6 +73,26 @@ function initUpload() {
     );
 }
 
+function pullFromGoogle() {
+    client = google.accounts.oauth2.initCodeClient({
+        client_id: window.googleClientId,
+        scope: "https://www.googleapis.com/auth/photoslibrary",
+        ux_mode: "popup",
+        callback: (response) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/authorization", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            // Set custom header for CRSF
+            xhr.setRequestHeader("X-Requested-With", "XmlHttpRequest");
+            xhr.onload = function() {
+                console.log("Auth code response: " + xhr.responseText);
+            };
+            xhr.send("code=" + response.code);
+        },
+    });
+    client.requestCode();
+}
+
 window.addEventListener("load", (event) => {
-	initUpload();
+    initUpload();
 });

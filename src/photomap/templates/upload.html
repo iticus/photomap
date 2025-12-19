@@ -2,10 +2,13 @@
 {% block title %}Upload - photomap{% endblock %}
 {% block head %}
     {{ super() }}
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script type="text/javascript" src="/static/js/upload.js"></script>
 {% endblock %}
 {% block body %}
-    <h3>Select &amp; Upload</h3>
+    <h3>Sync Google Photos</h3>
+    <button class="btn btn-success" onclick="pullFromGoogle();">Pull from Google</button>
+    <h3>Manual folder upload</h3>
     <form onsubmit="javascript: return false;">
         <div class="mb-3">
             <label for="secret" class="form-label">Secret</label>
@@ -35,4 +38,7 @@
             </div>
         </div>
     </div>
+    <script>
+        window.googleClientId = "{{GOOGLE_CLIENT_ID}}";
+    </script>
 {% endblock %}

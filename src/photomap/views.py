@@ -20,6 +20,7 @@ import cache
 import database
 import security
 from photo import load_image, make_thumbnails, parse_exif
+from providers.google import get_access_token, get_photos
 
 logger = logging.getLogger(__name__)
 
@@ -189,7 +190,11 @@ class Upload(BaseView):
 
     @BaseView.authenticated
     async def get(self) -> web.Response:
-        return aiohttp_jinja2.render_template("upload.html", self.request, context={"session": self.session})
+        context = {"session": self.session, "GOOGLE_CLIENT_ID": self.config.GOOGLE_CLIENT_ID}
+        import json
+        tokens = json.load(open("/home/iticus/test_tokens.json"))
+        result = await get_photos(tokens["access_token"])
+        return aiohttp_jinja2.render_template("upload.html", self.request, context=context)
 
     @BaseView.authenticated
     async def post(self) -> web.Response:
@@ -273,6 +278,26 @@ class Stats(BaseView):
                 await cache.set_value(self.cache, "stats", stats)
             return web.json_response(stats)
         return aiohttp_jinja2.render_template("stats.html", self.request, context={"session": self.session})
+
+
+class Authorization(BaseView):
+    """
+    Handler for Oauth callback requests
+    """
+
+    @BaseView.authenticated
+    async def get(self) -> web.Response:
+        assert self.request.headers.get("X-Requested-With") == "XmlHttpRequest"  # popup mode
+        code = self.request.query.get("code")
+        tokens = await get_access_token(code, self.config.GOOGLE_CLIENT_ID, self.config.GOOGLE_CLIENT_SECRET)
+        return aiohttp_jinja2.render_template("stats.html", self.request, context={"session": self.session})
+
+    @BaseView.authenticated
+    async def post(self) -> web.Response:
+        assert self.request.headers.get("X-Requested-With") == "XmlHttpRequest"  # popup mode
+        data = await self.request.post()
+        tokens = await get_access_token(data["code"], self.config.GOOGLE_CLIENT_ID, self.config.GOOGLE_CLIENT_SECRET)
+        return web.json_response("")
 
 
 class About(BaseView):
